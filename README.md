@@ -28,36 +28,50 @@ This tool aims to assist analysts in quickly finding and extracting relevant cli
 climate-policy-extractor/
 ├── climate_policy_extractor/
 │   ├── __init__.py
-│   ├── items.py                       # Data models for scraped items
-│   ├── settings.py                    # Scrapy settings
-│   ├── pipelines.py                   # Processing pipelines
-│   ├── spiders/
-│   │   ├── __init__.py
-│   │   └── ndc_spider.py              # Spider for scraping NDC documents
-│   └── utils.py                       # Utility functions
-├── notebooks/                         # Jupyter notebooks for exploration and analysis
-├── local_models/                      # Local copies of embedding models
-│   └── distilroberta-base/            # DistilRoBERTa model files
+│   ├── .env                          # Environment variables configuration
+│   ├── downloaders.py                # Document download functionality
+│   ├── items.py                      # Data models for scraped items
+│   ├── logging.py                    # Custom logging configuration
+│   ├── models.py                     # SQLAlchemy models for database
+│   ├── pipelines.py                  # Processing pipelines
+│   ├── settings.py                   # Scrapy settings with DB configuration
+│   ├── utils.py                      # Utility functions
+│   └── spiders/
+│       ├── __init__.py
+│       └── ndc_spider.py             # Spider for scraping NDC documents
+├── notebooks/                        # Jupyter notebooks for exploration and analysis
+│   ├── NB01-pdf-extractor.ipynb      # PDF extraction and processing
+│   ├── NB02-embedding-comparison.ipynb # Comparing embedding methods
+│   ├── NB03-information-retrieval.ipynb # Semantic search implementation
+│   ├── NB04-evaluation.ipynb         # System evaluation and results
+│   └── utils.py                      # Notebook-specific utilities
 ├── scripts/
-│   ├── process_documents.py           # Extract and process text from PDFs
-│   ├── populate_database.py           # Populate database with processed data
-│   ├── emissions_target_search.py     # Search for emissions targets
-│   ├── extract_target_summary.py      # Extract summary of targets
-│   └── test_tesseract.py              # Testing OCR capabilities
-├── data/
-│   ├── pdfs/                          # Downloaded PDF documents
-│   ├── processed/                     # Processed document data
-│   ├── chunks/                        # JSON files with document chunks
-│   └── json/                          # JSON output files from processing
-├── models/
-│   └── models.py                      # SQLAlchemy models for database
-├── README.md                          # This file
-├── CONTRIBUTING.md                    # Setup and contribution guidelines
-├── REPORT.md                          # Technical report template
-├── requirements.txt                   # Project dependencies
-├── tasks.py                           # Database initialization and management
-└── scrapy.cfg                         # Scrapy configuration
+│   ├── process_documents.py          # Extract and process text from PDFs
+│   ├── populate_database.py          # Populate database with processed data
+│   ├── emissions_target_search.py    # Search for emissions targets
+│   ├── extract_target_summary.py     # Extract summary of targets
+│   └── test_tesseract.py             # Testing OCR capabilities
+├── data/                             # [gitignored] Data storage directory
+│   ├── pdfs/                         # Downloaded PDF documents
+│   └── processed/                    # Processed document data
+│       ├── json/                     # Full text JSON from processing
+│       ├── chunks/                   # JSON files with document chunks
+│       └── results/                  # Results from extraction and analysis
+├── REPORT.ipynb                      # Detailed project report with code examples
+├── README.md                         # Project overview and usage instructions
+├── CONTRIBUTING.md                   # Setup and contribution guidelines
+├── .env.sample                       # Example environment variables template
+├── requirements.txt                  # Project dependencies
+├── tasks.py                          # Command-line tools for project management
+├── .gitignore                        # Git ignore patterns for project files
+└── scrapy.cfg                        # Scrapy configurationn
 ```
+
+## Project Pipeline Visualisation
+
+![Climate Policy Extractor Workflow](./figures/DS205_Problem_Set_2_Workflow.png)
+
+*Overview of the complete document processing and information extraction pipeline*
 
 ## Getting Started
 

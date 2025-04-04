@@ -1,1 +1,0 @@
-This is just a suggestion of notebooks. You can remove/add notebooks as you see fit.
