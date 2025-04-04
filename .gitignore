@@ -213,7 +213,7 @@ results/
 outputs/
 figures/
 plots/
-*.png
+# *.png  # Commented out to allow PNG files
 *.jpg
 *.jpeg
 *.pdf
