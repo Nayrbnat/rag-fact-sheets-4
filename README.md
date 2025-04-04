@@ -69,7 +69,11 @@ climate-policy-extractor/
 
 ## Project Pipeline Visualisation
 
-![Climate Policy Extractor Workflow](./figures/DS205_Problem_Set_2_Workflow.png)
+![Climate Policy Extractor Workflow]
+<figure>
+    <img src="./figures/DS205 Problem Set 2 Workflow.png" role="presentation" style="object-fit: cover;width:5em;height:5em;border-radius: 1em;margin:1em 0em;">
+</figure>
+
 
 *Overview of the complete document processing and information extraction pipeline*
 
