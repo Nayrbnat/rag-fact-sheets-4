@@ -53,7 +53,7 @@ To run the NDC spider and collect documents:
 
 ```bash
 # Make sure you're in the project root directory
-cd climate-policy-extractor
+cd climate_policy_extractor
 # Run the spider
 scrapy crawl ndc_spider
 ```
@@ -62,30 +62,17 @@ scrapy crawl ndc_spider
 
 The project uses PostgreSQL with the pgvector extension for vector search capabilities. You have two options for setting up the database:
 
-### Option A: Using Docker (Recommended)
-
 #### 3.1 Install Docker
 
 If you don't have Docker installed, you can download it from the [Docker website](https://www.docker.com/products/docker-desktop/).
 
-For macOS users, you can also install it using Homebrew:
-
-```bash
-brew install --cask docker
-```
 
 #### 3.2 Run PostgreSQL with pgvector
 
 Start a PostgreSQL container with the pgvector extension:
 
 ```bash
-docker run -itd --name climate-policy-postgres \
-  -v postgres_data:/var/lib/postgresql/data \
-  -p 5432:5432 \
-  -e POSTGRES_PASSWORD=climate \
-  -e POSTGRES_USER=climate \
-  -e POSTGRES_DB=climate \
-  pgvector/pgvector:0.7.1-pg16
+docker run -itd --name climate-policy-postgres   -v postgres_climate_policy_data:/var/lib/postgresql/data   -p 5432:5432   -e POSTGRES_PASSWORD=climate   -e POSTGRES_USER=climate   -e POSTGRES_DB=climate   pgvector/pgvector:0.7.1-pg16
 ```
 
 Verify that the container is running:
@@ -94,32 +81,8 @@ Verify that the container is running:
 docker ps -a
 ```
 
+
 The STATUS of the container should be "Up".
-
-### Option B: Local PostgreSQL Installation
-
-If you prefer not to use Docker, you can install PostgreSQL and pgvector directly on your system.
-
-#### 3.2.1 Install PostgreSQL
-
-- **macOS**: 
-  ```bash
-  brew install postgresql@16
-  brew services start postgresql@16
-  ```
-
-- **Ubuntu/Debian**:
-  ```bash
-  sudo apt update
-  sudo apt install postgresql-16
-  sudo systemctl start postgresql
-  ```
-
-- **Windows**: Download and install from the [PostgreSQL website](https://www.postgresql.org/download/windows/).
-
-#### 3.2.2 Install pgvector extension
-
-Follow the [pgvector installation instructions](https://github.com/pgvector/pgvector#installation) for your platform.
 
 #### 3.2.3 Create database and user
 
@@ -165,6 +128,13 @@ EMBEDDING_MODEL=sentence-transformers/all-mpnet-base-v2
 
 ## 5. Working with the Database
 
+After opening docker desktop, run the following command to start the PostgreSQL container:
+
+```bash
+docker start climate-policy-postgres
+```
+To initiate docker you have to run the Docker Desktop application.
+
 ### 5.1 Viewing PostgreSQL tables
 
 You can connect to the database to view tables and run queries:
@@ -173,12 +143,6 @@ You can connect to the database to view tables and run queries:
 
 ```bash
 docker exec -it climate-policy-postgres psql -U climate -d climate
-```
-
-#### Using local PostgreSQL:
-
-```bash
-psql -U climate -d climate
 ```
 
 ### 5.2 Database Schema
@@ -206,7 +170,8 @@ The project uses the following database schema:
 | line_number | integer | Line number representing this chunk |
 | embedding | vector(768) | Text embedding vector |
 
-## 6. Troubleshooting
+
+## 7. Troubleshooting
 
 ### Docker Issues
 

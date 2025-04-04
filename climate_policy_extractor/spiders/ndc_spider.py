@@ -2,19 +2,12 @@
 Spider for scraping NDC (Nationally Determined Contributions) documents from the UNFCCC NDC registry.
 """
 import scrapy
-import logging
 
 from tqdm import tqdm
 from datetime import datetime
 from dateutil.parser import parse
 
 from ..items import NDCDocument
-from ..logging import setup_colored_logging
-
-# Set up basic logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-setup_colored_logging(logger)
 
 class NDCSpider(scrapy.Spider):
     """
@@ -32,10 +25,10 @@ class NDCSpider(scrapy.Spider):
         Start requests method to add more logging.
         """
         print("Starting requests...")
-        logger.info("Starting requests method called")
+        self.logger.info("Starting requests method called")
 
         for url in self.start_urls:
-            logger.info(f"Sending request to {url}")
+            self.logger.info(f"Sending request to {url}")
             yield scrapy.Request(url=url, callback=self.parse)
     
     def parse(self, response):
@@ -52,14 +45,14 @@ class NDCSpider(scrapy.Spider):
             Requests to download PDF documents
         """
         print("Parse method called!")
-        logger.info(f"Parsing NDC registry page: {response.url}")
+        self.logger.info(f"Parsing NDC registry page: {response.url}")
 
         # Find the table and all rows
         rows = response.xpath('//table[contains(@class, "table-hover")]//tr')
 
         # TODO: Remove max number of files to process all of them!
         MAX_FILES = 5
-        for row in tqdm(rows[1:MAX_FILES], desc="Processing rows"):  # Skip table header
+        for row in tqdm(rows[1:], desc="Processing rows"):  # Skip table header
             # Extract data from columns
             cols = row.xpath('./td')
             country = cols[0].xpath('normalize-space(.)').get()

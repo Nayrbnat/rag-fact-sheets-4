@@ -2,7 +2,17 @@
 Scrapy settings for climate_policy_extractor project.
 """
 import os
+from dotenv import load_dotenv
 from pathlib import Path
+from .logging import setup_colored_logging
+
+load_dotenv()
+
+# In settings.py
+DATABASE_URL = os.getenv('DATABASE_URL')
+# If not set in environment, use a default
+if not DATABASE_URL:
+    DATABASE_URL = 'postgresql://climate:climate@localhost:5432/climate'
 
 BOT_NAME = "climate_policy_extractor"
 
@@ -13,10 +23,9 @@ NEWSPIDER_MODULE = "climate_policy_extractor.spiders"
 # USER_AGENT = "climate_policy_extractor (+https://lse-dsi.github.io/DS205/)"
 
 ITEM_PIPELINES = {
-    'climate_policy_extractor.pipelines.DocumentDownloadPipeline': 100,
-    # TODO: You can choose to add another pipeline here to do the 
-    #       text extraction and chunking whenever you run the crawler
-    # 'climate_policy_extractor.pipelines.PDFTextExtractionPipeline': 200
+    'climate_policy_extractor.pipelines.PostgreSQLPipeline': 300,
+    # 'climate_policy_extractor.pipelines.DocumentDownloadPipeline': 400,  # Enable document download
+    # 'climate_policy_extractor.pipelines.PDFTextExtractionPipeline': 500,  # Enable text extraction
 }
 
 AUTOTHROTTLE_ENABLED = True
@@ -25,6 +34,10 @@ AUTOTHROTTLE_MAX_DELAY = 10
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
+
+# Documents processing settings
+MAX_CHUNK_SIZE = 512  # Maximum size of text chunks in characters
+CHUNK_OVERLAP = 2     # Number of sentences to overlap between chunks
 
 # Set settings whose default value is deprecated to a future-proof value
 REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
@@ -36,22 +49,22 @@ PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
 DOWNLOAD_DIRECTORY = os.path.join(DATA_DIR, 'pdfs')
 PROCESSED_DIRECTORY = os.path.join(DATA_DIR, 'processed')
-LOG_LEVEL = "DEBUG"
 
-FEEDS = {
-    'data/output.jsonl': {
-        'format': 'jsonlines',
-        'encoding': 'utf8',
-        'store_empty': True,
-        'overwrite': True,
-    },
-}
+# Add accepted file types
+ACCEPTED_FILE_TYPES = ['pdf', 'docx']
 
-# Files Pipeline settings
-FILES_STORE = DOWNLOAD_DIRECTORY
-FILES_EXPIRES = 365  # Files will not expire for 1 year
-MEDIA_ALLOW_REDIRECTS = True
+# Logging settings
+LOG_FILE = os.path.join(PROJECT_ROOT, 'scrapy.log')
+LOG_ENABLED = True
+LOG_LEVEL = 'DEBUG'
+LOG_STDOUT = False  # Don't log stdout
+LOG_STDERR = False  # Don't log stderr
+LOG_FILE_APPEND = True  # Start fresh log each time
+LOG_FORMAT = '%(asctime)s [%(name)s] %(levelname)s: %(message)s'
+LOG_DATEFORMAT = '%Y-%m-%d %H:%M:%S'
 
 # Create necessary directories
-for directory in [DATA_DIR, DOWNLOAD_DIRECTORY, PROCESSED_DIRECTORY]:
-    os.makedirs(directory, exist_ok=True) 
+os.makedirs(DOWNLOAD_DIRECTORY, exist_ok=True)
+os.makedirs(PROCESSED_DIRECTORY, exist_ok=True)
+os.makedirs(os.path.join(PROCESSED_DIRECTORY, 'json'), exist_ok=True)
+os.makedirs(os.path.join(PROCESSED_DIRECTORY, 'chunks'), exist_ok=True)

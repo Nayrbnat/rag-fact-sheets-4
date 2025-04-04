@@ -1,66 +1,35 @@
-"""Logging utilities for the climate tracker project.
-
-This module provides custom logging formatters and configuration
-to enhance logging output with colors and consistent formatting.
 """
-
+Centralized logging configuration for the climate policy extractor.
+"""
 import logging
-import sys
+import colorlog
+from scrapy.utils.project import get_project_settings
 
-class ColorFormatter(logging.Formatter):
-    """Custom formatter to add colors to log messages.
+def setup_colored_logging(logger=None):
+    """Set up colored logging for both custom and Scrapy loggers."""
+    settings = get_project_settings()
     
-    This formatter adds ANSI color codes to log messages based on their
-    severity level, making it easier to visually distinguish between
-    different types of logs.
+    # If LOG_FILE is set and we're not supposed to log to stdout/stderr,
+    # don't add any console handlers
+    if settings.get('LOG_FILE') and not (settings.get('LOG_STDOUT') or settings.get('LOG_STDERR')):
+        return
     
-    Colors used:
-        - DEBUG: Cyan
-        - INFO: Green
-        - WARNING: Yellow
-        - ERROR: Red
-        - CRITICAL: Bold Red
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(
+        "%(log_color)s%(asctime)s [%(name)s] %(levelname)s:%(reset)s %(white)s%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    ))
+
+    # Configure specific logger if provided
+    if logger:
+        logger.handlers = []
+        logger.addHandler(handler)
+
+def get_logger(name):
     """
-    
-    # More visible ANSI color codes
-    cyan = "\033[36m"
-    green = "\033[32m"
-    yellow = "\033[33m" 
-    red = "\033[31m"
-    bold_red = "\033[1;31m"
-    reset = "\033[0m"
-    
-    FORMATS = {
-        logging.DEBUG: cyan + "%(asctime)s [%(name)s] %(levelname)s: %(message)s" + reset,
-        logging.INFO: green + "%(asctime)s [%(name)s] %(levelname)s: %(message)s" + reset,
-        logging.WARNING: yellow + "%(asctime)s [%(name)s] %(levelname)s: %(message)s" + reset,
-        logging.ERROR: red + "%(asctime)s [%(name)s] %(levelname)s: %(message)s" + reset,
-        logging.CRITICAL: bold_red + "%(asctime)s [%(name)s] %(levelname)s: %(message)s" + reset
-    }
-
-    def __init__(self):
-        """Initialize with Scrapy's date format."""
-        super().__init__(datefmt="%Y-%m-%d %H:%M:%S")
-
-    def format(self, record):
-        """Format the log record with appropriate color.
-        
-        Args:
-            record: The log record to format
-            
-        Returns:
-            str: The formatted log message with color codes
-        """
-        log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt, self.datefmt)
-        return formatter.format(record)
-
-def setup_colored_logging(logger):
-    """Configure a logger with colored output to console."""
-    # Create console handler that writes to stderr (to separate from Scrapy's stdout)
-    console_handler = logging.StreamHandler(sys.stderr)
-    console_handler.setFormatter(ColorFormatter())
-    
-    # Add our handler to the logger
-    logger.addHandler(console_handler)
-    logger.propagate = False  # Prevent propagation to avoid duplicate logs 
+    Get a logger with colored formatting.
+    Use this instead of logging.getLogger() throughout the project.
+    """
+    logger = logging.getLogger(name)
+    setup_colored_logging(logger)
+    return logger 

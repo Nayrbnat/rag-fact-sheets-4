@@ -1,4 +1,3 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/TIm46Wr2)
 # Climate Policy Extractor (DS205 - Problem Set 2)
 
 <figure>
@@ -36,14 +35,27 @@ climate-policy-extractor/
 │   │   ├── __init__.py
 │   │   └── ndc_spider.py              # Spider for scraping NDC documents
 │   └── utils.py                       # Utility functions
-├── notebooks/                         # Jupyter notebooks
+├── notebooks/                         # Jupyter notebooks for exploration and analysis
+├── local_models/                      # Local copies of embedding models
+│   └── distilroberta-base/            # DistilRoBERTa model files
+├── scripts/
+│   ├── process_documents.py           # Extract and process text from PDFs
+│   ├── populate_database.py           # Populate database with processed data
+│   ├── emissions_target_search.py     # Search for emissions targets
+│   ├── extract_target_summary.py      # Extract summary of targets
+│   └── test_tesseract.py              # Testing OCR capabilities
 ├── data/
 │   ├── pdfs/                          # Downloaded PDF documents
-│   └── processed/                     # Processed document data
+│   ├── processed/                     # Processed document data
+│   ├── chunks/                        # JSON files with document chunks
+│   └── json/                          # JSON output files from processing
+├── models/
+│   └── models.py                      # SQLAlchemy models for database
 ├── README.md                          # This file
 ├── CONTRIBUTING.md                    # Setup and contribution guidelines
 ├── REPORT.md                          # Technical report template
 ├── requirements.txt                   # Project dependencies
+├── tasks.py                           # Database initialization and management
 └── scrapy.cfg                         # Scrapy configuration
 ```
 
@@ -53,16 +65,127 @@ For detailed setup instructions, including environment setup, database configura
 
 ## Workflow
 
-The project follows this general workflow:
+The project follows this detailed workflow:deac
 
-1. **Data Collection**: Scrape NDC documents from the UNFCCC registry
-2. **Document Processing**: Extract text and metadata from PDFs
-3. **Text Analysis**: Analyze document structure and identify key sections
-4. **Embedding Generation**: Create vector representations of text chunks
-5. **Information Retrieval**: Build a system to extract specific climate policy information
-6. **Evaluation**: Assess the accuracy and effectiveness of the extraction system
+1. **Setup and Configuration**:
+   - Create environment variables using `.env` file (copy from `.env.sample`)
+   - Make sure to update the .env file with your API key from the bottom of this page (refer to the API Key section)
+   - Refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for detailed setup instructions
+   - In the event that you face errors with setting up `venv` , just default to the `venv_working` virtual environment that I have uploaded. Make sure to be on Python 3.10.11 to guarantee that this works
+   - Initialize PostgreSQL database using `python tasks.py init-db`
+   - Database schema is defined in `models.py` using SQLAlchemy ORM
 
-The included notebooks guide you through each step of this process.
+
+2. **Data Collection**:
+   - Scrape NDC documents from the UNFCCC registry
+   - Downloaded PDFs are stored in `data/pdfs/` directory
+
+3. **Document Processing** (`process_documents.py`):
+   - Extract text and metadata from PDFs
+   - Process documents into manageable chunks
+   - Generate JSON outputs in `data/chunks/` and `data/json/` directories
+   - OCR support via Tesseract for image-based PDFs
+
+4. **Database Population** (`populate_database.py`):
+   - Load processed document chunks into PostgreSQL database
+   - Update database columns with extracted metadata
+   - Create relationships between documents and chunks
+
+5. **Text Analysis and Embedding Generation**:
+   - Analyze document structure to identify key sections
+   - Create vector representations of text chunks using pre-trained models
+   - Store embeddings in the database for efficient retrieval
+
+6. **Information Retrieval**:
+   - Use `emissions_target_search.py` to locate climate commitments
+   - Extract specific climate policy information like emissions targets
+   - Generate summaries using `extract_target_summary.py`
+
+7. **Evaluation and Reporting**:
+   - Assess extraction accuracy and system effectiveness
+   - Generate reports on climate commitments by country
+
+The included notebooks guide you through each step of this process with examples and visualizations.
+
+
+## Using the tasks.py file
+
+### Managing the POSTGRESQL database
+```bash
+python tasks.py manage-db --operation <operation_name>
+```
+Available Operations
+The manage_db function supports the following operations:
+- init: Initialize the database by creating tables if they don't exist
+- recreate: Drop all tables and recreate them (destructive)
+- drop: Drop all tables (destructive)
+- drop_chunks: Drop only the doc_chunks table (destructive)
+- update_chunks: Update doc_chunks table to match current model definition (destructive)
+
+### Step by step process on how to use this repository
+
+
+
+# 0. Test Tesseract OCR
+
+- Run this code to check if you have tesseract properly installed.
+```bash
+python tasks.py test-ocr
+```
+
+# 1. Initialize database
+```bash
+python tasks.py manage-db --operation init
+```
+- Make sure you use setup-db to initialize the Database with PGvector
+
+# 1a Scrap data from NDC
+```bash
+python tasks.py crawl
+```
+
+# 1b Download data from NDC
+```bash
+python tasks.py download
+```
+
+# 2. Process documents
+```bash
+python tasks.py process-docs
+```
+
+# 3. Populate database with embeddings
+```bash
+python tasks.py populate-db
+```
+
+# 4. Search for emissions targets
+```bash
+python tasks.py find-emissions-targets
+```
+
+# 5. Extract and summarize targets
+```bash
+python tasks.py extract-targets
+```
+
+## API Key (Very Important for NB04)
+
+- Under NB04, you will see that there are 2 options to be used for the LLM. Either you uncomment the code and download a local LLM or (if your computer has no CUDA support like me) you can use the API to access open sourced models. I will write the API key here and you have to edit the .env.sample to include the following API key
+- API KEY: "4ZYotjAApOrVK1MEjunlagS1pr8AYpkO"
+- Add this to the .env file under API_KEY
+
+## Notebooks
+
+- I do not suggest running all the scripts and then looking through the notebooks. The notebooks are meant to tell a story for the project. I would recommand adopting the following structure:
+
+1. Run the 1a,1b and 2 scripts to download and process the data. Now read NB01 to understand what this does.
+
+2. Run 3 (`tasks.py populate-db`) to populate the database and read NB02 to understand what this does.
+
+3. Run 4 (`find-emissions-targets`) to do a similarity search and read NB03 to understand what this does. If you DON'T run this script first, you will get an error for NB03!
+
+4. Run 5 (`extract-targets`) to extract the emissions targets and read NB04 to understand what this does. If you DON'T run this script first, you will get an error for NB04!
 
 ## License
 

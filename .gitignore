@@ -174,3 +174,95 @@ cython_debug/
 
 .DS_Store
 data/
+
+# Additional cache files/directories
+*cache*/
+.cached*
+*_cache/
+.local_cache/
+cache/
+tmp/
+temp/
+.tmp/
+.temp/
+# Jupyter server cache
+.jupyter/
+# VSCode cache
+.vscode/
+
+#### PROJECT SPECIFIC IMPROVEMENTS ####
+
+# Data files - more specific patterns
+data/
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+*.pkl
+*.pickle
+*.json
+*.jsonl
+*.h5
+*.hdf5
+*.sqlite
+*.db
+
+# Output and results
+results/
+outputs/
+figures/
+plots/
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.svg
+
+# Jupyter notebooks with output cells
+notebooks/**/*.ipynb
+
+# Model files and artifacts
+models/
+*.joblib
+*.model
+*.pt
+*.pth
+*.onnx
+*.h5
+*.keras
+
+# Credentials and secrets
+credentials/
+**/*.key
+**/*.pem
+**/*credentials*
+**/*secret*
+**/*token*
+**/*password*
+.env
+!.env.example
+!.env.sample
+
+# Additional IDE settings
+.idea/
+.vscode/
+*.code-workspace
+*.sublime-*
+.netbeans/
+.eclipse/
+.settings/
+
+# Documentation builds
+docs/build/
+docs/_build/
+docs/api/
+docs/generated/
+docs/auto_examples/
+
+# Virtual environment patterns (more comprehensive)
+*venv*/
+*virtualenv*/
+.python-version
+.conda/
+/envs/
