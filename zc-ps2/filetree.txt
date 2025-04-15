@@ -1,0 +1,33 @@
+climate_policy_extractor/
+├── climate_policy_extractor/
+│   ├── spiders/
+│   │   └── ndc_spider.py
+│   ├── downloaders.py
+│   ├── items.py
+│   ├── logging.py
+│   ├── models.py
+│   ├── pipelines.py
+│   ├── settings.py
+│   └── utils.py
+├── data/
+│   ├── json/
+│   ├── pdfs/
+│   │   ├── afghanistan_english_20220601.pdf
+│   │   ├── ...
+│   │   └── zimbabwe_english_20250201.pdf
+│   └── processed/
+├── local_models/
+├── notebooks/
+│   ├── NB01-pdf-extractor.ipynb
+│   ├── NB02-embedding-comparison.ipynb
+│   ├── NB03-information-retrieval.ipynb
+│   ├── NB04-evaluation.ipynb
+│   └── utils.py
+├── .env
+├── .gitignore
+├── CONTRIBUTING.md
+├── README.md
+├── REPORT.md
+├── requirements.txt
+├── scrapy.cfg
+└── tasks.py
