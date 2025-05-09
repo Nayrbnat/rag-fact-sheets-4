@@ -294,7 +294,7 @@ async def process_file_many(file_path):
     async with semaphore:
         return await process_file_one(file_path)
 
-@Logger.log(log_file=project_root / "logs/process.log", log_level="DEBUG")
+@Logger.log(log_file=project_root / "logs/process.log", log_level="INFO")
 async def run_script(force_reprocess: bool = False):
     try:
         logger.warning(f"\n\n[3_PROCESS] Running script with force_reprocess={force_reprocess}...")
