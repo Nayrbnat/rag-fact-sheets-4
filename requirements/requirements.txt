@@ -21,4 +21,7 @@ docx
 gensim
 pikepdf
 scrapy
+selenium
+webdriver-manager
+
 -c constraints.txt
