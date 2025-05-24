@@ -21,6 +21,8 @@ docx
 gensim
 pikepdf
 scrapy
+selenium
+webdriver-manager
 pytest
 sentence-transformers
 scikit-learn
