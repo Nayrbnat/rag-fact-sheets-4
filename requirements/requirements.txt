@@ -23,5 +23,5 @@ pikepdf
 scrapy
 selenium
 webdriver-manager
-
+pytest
 -c constraints.txt
