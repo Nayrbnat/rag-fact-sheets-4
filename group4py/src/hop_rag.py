@@ -1,5 +1,5 @@
 """
-HopRAG Graph Processor with Memory-Optimized BFS and Analysis
+Optimized HopRAG Graph Processor with consistent UUID handling and improved efficiency
 Implements embeddings, relationship detection, and graph analysis
 """
 
@@ -10,7 +10,8 @@ import gc
 import re
 import logging
 import networkx as nx
-from typing import List, Dict, Tuple, Optional, Set
+import traceback
+from typing import List, Dict, Tuple, Optional, Set, Union
 from datetime import datetime
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
@@ -18,25 +19,30 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors
 from sqlalchemy import text
-from database import Connection, Document, DocChunkORM
-from schema import DatabaseConfig, LogicalRelationship
+import uuid
+from .database import Connection, NDCDocumentORM as Document, DocChunkORM, LogicalRelationshipORM
+from .schema import DatabaseConfig, LogicalRelationship
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Type alias for consistency
+ChunkID = Union[str, uuid.UUID]
+
 @dataclass
 class ChunkData:
-    """Memory-efficient chunk representation"""
-    chunk_id: int
+    """Memory-efficient chunk representation with consistent UUID handling"""
+    chunk_id: uuid.UUID  # Always use UUID objects consistently
     content: str
     embedding: Optional[np.ndarray] = None
+    chunk_index: Optional[int] = None
 
 @dataclass
 class RelationshipScore:
-    """Relationship detection result"""
-    source_id: int
-    target_id: int
+    """Relationship detection result with consistent UUID types"""
+    source_id: uuid.UUID
+    target_id: uuid.UUID
     relationship_type: str
     confidence: float
     evidence: str
@@ -44,8 +50,8 @@ class RelationshipScore:
 
 @dataclass
 class GraphAnalysisResult:
-    """Graph analysis result for ranking"""
-    chunk_id: int
+    """Graph analysis result with consistent UUID handling"""
+    chunk_id: uuid.UUID
     content: str
     centrality_scores: Dict[str, float]
     community_id: int
@@ -53,8 +59,8 @@ class GraphAnalysisResult:
 
 @dataclass
 class NodeClassification:
-    """Classification result for a single node"""
-    chunk_id: int
+    """Classification result for a single node with UUID consistency"""
+    chunk_id: uuid.UUID
     content: str
     centrality_scores: Dict[str, float]
     combined_score: float
@@ -62,15 +68,46 @@ class NodeClassification:
     rank_within_class: int
     confidence_level: str
 
+class UUIDHelper:
+    """Utility class for consistent UUID handling"""
+    
+    @staticmethod
+    def ensure_uuid(value: ChunkID) -> uuid.UUID:
+        """Convert any ID format to UUID object"""
+        if isinstance(value, uuid.UUID):
+            return value
+        elif isinstance(value, str):
+            try:
+                return uuid.UUID(value)
+            except ValueError:
+                # If it's not a valid UUID string, generate a deterministic UUID
+                return uuid.uuid5(uuid.NAMESPACE_DNS, value)
+        else:
+            raise TypeError(f"Cannot convert {type(value)} to UUID")
+    
+    @staticmethod
+    def uuid_list_for_db(uuids: List[uuid.UUID]) -> List[str]:
+        """Convert UUID list to string list for database queries when needed"""
+        return [str(u) for u in uuids]
+
 class MemoryOptimizedEmbedder:
     """Memory-efficient embedding generator"""
     
     def __init__(self, model_name: str = "all-MiniLM-L6-v2", batch_size: int = 32):
-        self.model = SentenceTransformer(model_name)
         self.batch_size = batch_size
+        
+        try:
+            self.model = SentenceTransformer(model_name)
+            logger.info(f"Loaded sentence transformer model: {model_name}")
+        except Exception as e:
+            logger.warning(f"Failed to load {model_name}: {e}")
+            fallback_model = "all-MiniLM-L6-v2"
+            logger.info(f"Falling back to: {fallback_model}")
+            self.model = SentenceTransformer(fallback_model)
+            
         self.embedding_dim = self.model.get_sentence_embedding_dimension()
-        logger.info(f"Initialized embedder: {model_name} (dim: {self.embedding_dim})")
-    
+        logger.info(f"Embedding dimension: {self.embedding_dim}")
+
     def encode_batch(self, texts: List[str]) -> np.ndarray:
         """Encode texts in batches to manage memory"""
         embeddings = []
@@ -80,14 +117,13 @@ class MemoryOptimizedEmbedder:
             batch_embeddings = self.model.encode(batch, show_progress_bar=False)
             embeddings.append(batch_embeddings)
             
-            # Force garbage collection every few batches
             if i % (self.batch_size * 10) == 0:
                 gc.collect()
         
         return np.vstack(embeddings) if embeddings else np.array([])
 
-class LogicalRelationshipDetector:
-    """Memory-efficient relationship detection"""
+class OptimizedRelationshipDetector:
+    """Optimized relationship detection with consistent UUID handling"""
     
     def __init__(self):
         self.climate_patterns = {
@@ -105,7 +141,8 @@ class LogicalRelationshipDetector:
                 (r'renewable energy.*includes.*solar.*wind', r'renewable'),
                 (r'adaptation.*refers to|means', r'adaptation'),
                 (r'mitigation.*refers to|means', r'mitigation')
-            ],            'CONTRADICTS': [
+            ],
+            'CONTRADICTS': [
                 (r'target.*\d+.*MtCO2e', r'target.*\d+.*MtCO2e'),
                 (r'by \d{4}', r'by \d{4}'),
                 (r'increase.*emissions', r'reduce.*emissions'),
@@ -126,7 +163,7 @@ class LogicalRelationshipDetector:
     
     def detect_relationships_batch(self, source_chunks: List[ChunkData], 
                                  target_chunks: List[ChunkData]) -> List[RelationshipScore]:
-        """Detect relationships in batches for memory efficiency"""
+        """Detect relationships maintaining UUID consistency"""
         relationships = []
         
         for source_chunk in source_chunks:
@@ -156,8 +193,8 @@ class LogicalRelationshipDetector:
                     if confidence > best_confidence:
                         best_confidence = confidence
                         best_relationship = RelationshipScore(
-                            source_id=source.chunk_id,
-                            target_id=target.chunk_id,
+                            source_id=source.chunk_id,  # Already UUID
+                            target_id=target.chunk_id,  # Already UUID
                             relationship_type=rel_type,
                             confidence=confidence,
                             evidence=f"Pattern: {source_pattern} -> {target_pattern}",
@@ -168,7 +205,7 @@ class LogicalRelationshipDetector:
     
     def _calculate_confidence(self, source: ChunkData, target: ChunkData, 
                             source_pattern: str, target_pattern: str) -> float:
-        """Calculate confidence score for relationship"""
+        """Optimized confidence calculation"""
         # Semantic similarity component
         if source.embedding is not None and target.embedding is not None:
             semantic_sim = cosine_similarity(
@@ -176,59 +213,73 @@ class LogicalRelationshipDetector:
                 target.embedding.reshape(1, -1)
             )[0][0]
         else:
-            semantic_sim = 0.3  # Default if embeddings not available
+            semantic_sim = 0.3
         
-        # Pattern strength (more specific patterns = higher strength)
+        # Pattern strength
         pattern_strength = 0.8 if r'\d+' in source_pattern else 0.6
         
-        # Distance penalty (closer chunks more likely to be related)
-        # Convert chunk_id to int if it's a string to avoid TypeError
-        try:
-            source_id = int(source.chunk_id) if isinstance(source.chunk_id, str) else source.chunk_id
-            target_id = int(target.chunk_id) if isinstance(target.chunk_id, str) else target.chunk_id
-            distance_penalty = max(0.1, 1.0 - abs(source_id - target_id) * 0.001)
-        except (ValueError, TypeError):
-            # Fallback if conversion fails or other errors occur
-            distance_penalty = 0.5  # Use a neutral value
-            logger.warning(f"Could not calculate distance penalty between chunks {source.chunk_id} and {target.chunk_id}. Using default value.")
-        
-        # Combined confidence
-        confidence = (
-            0.3 * semantic_sim + 
-            0.5 * pattern_strength + 
-            0.2 * distance_penalty
-        )
+        # Use chunk_index for distance if available, otherwise use semantic similarity
+        if source.chunk_index is not None and target.chunk_index is not None:
+            distance_penalty = max(0.1, 1.0 - abs(source.chunk_index - target.chunk_index) * 0.001)
+            confidence = (
+                0.3 * semantic_sim + 
+                0.5 * pattern_strength + 
+                0.2 * distance_penalty
+            )
+        else:
+            # No distance penalty available, rely more on semantic similarity
+            confidence = (
+                0.6 * semantic_sim + 
+                0.4 * pattern_strength
+            )
         
         return min(confidence, 1.0)
 
 class HopRAGGraphProcessor:
-    """Main graph processing engine with memory optimization"""
+    """Optimized graph processor with consistent UUID handling"""
     
-    def __init__(self, db_config: DatabaseConfig, embedding_model: str = "climatebert/distilroberta-base-climate-f"):
+    def __init__(self, db_config: DatabaseConfig, embedding_model: str = "all-MiniLM-L6-v2"):
         self.db_config = db_config
         self.db_connection = Connection(config=db_config)
         self.embedder = MemoryOptimizedEmbedder(embedding_model)
-        self.relationship_detector = LogicalRelationshipDetector()
+        self.relationship_detector = OptimizedRelationshipDetector()
         self.executor = ThreadPoolExecutor(max_workers=4)
         
+        # Cache for UUID conversions to avoid repeated operations 
+        self._uuid_cache: Dict[str, uuid.UUID] = {}
+        
+        logger.info(f"Optimized HopRAG processor initialized with model: {embedding_model}")
+
+    def _get_cached_uuid(self, value: ChunkID) -> uuid.UUID:
+        """Get UUID with caching to avoid repeated conversions"""
+        if isinstance(value, uuid.UUID):
+            return value
+        
+        # Use cache for string UUIDs
+        if isinstance(value, str):
+            if value not in self._uuid_cache:
+                self._uuid_cache[value] = UUIDHelper.ensure_uuid(value)
+            return self._uuid_cache[value]
+        
+        return UUIDHelper.ensure_uuid(value)
+
     async def initialize(self):
         """Initialize database connections"""
         success = self.db_connection.connect()
         if not success:
             raise RuntimeError("Failed to connect to database")
-        logger.info("Graph processor initialized")
-    
+        logger.info("Optimized graph processor initialized")
+
     async def process_embeddings_batch(self, batch_size: int = 500):
-        """Generate embeddings for chunks without embeddings"""
-        
+        """Generate embeddings with optimized UUID handling"""
         engine = self.db_connection.get_engine()
         
-        # Get chunks without embeddings using the correct table name
+        # Get chunks without embeddings
         with engine.connect() as conn:
             chunks_data = conn.execute(text("""
                 SELECT id, content 
                 FROM doc_chunks 
-                WHERE transformer_embedding IS NULL 
+                WHERE hoprag_embedding IS NULL 
                 ORDER BY id
                 LIMIT :batch_limit
             """), {"batch_limit": batch_size * 5}).fetchall()
@@ -247,14 +298,14 @@ class HopRAGGraphProcessor:
             texts = [row.content for row in batch]
             embeddings = self.embedder.encode_batch(texts)
             
-            # Update database with correct column name
+            # Update database - direct UUID usage, no conversions
             with engine.connect() as conn:
                 for j, row in enumerate(batch):
                     conn.execute(text(
-                        "UPDATE doc_chunks SET transformer_embedding = :embedding WHERE id = :chunk_id"
+                        "UPDATE doc_chunks SET hoprag_embedding = :embedding WHERE id = :chunk_id"
                     ), {
                         "embedding": embeddings[j].tolist(),
-                        "chunk_id": row.id
+                        "chunk_id": row.id  # Direct UUID usage
                     })
                 conn.commit()
             
@@ -263,42 +314,44 @@ class HopRAGGraphProcessor:
             # Force garbage collection
             del embeddings, texts
             gc.collect()
-    
+
     async def get_doc_chunk_count(self, doc_id: str) -> int:
         """Get the number of chunks for a specific document"""
+        doc_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, doc_id)
         engine = self.db_connection.get_engine()
         
         with engine.connect() as conn:
             result = conn.execute(text("""
                 SELECT COUNT(*) FROM doc_chunks 
                 WHERE doc_id = :doc_id
-            """), {"doc_id": doc_id}).scalar()
+            """), {"doc_id": doc_uuid}).scalar()
             
         return result or 0
-    
+
     async def build_relationships_sparse(self, max_neighbors: int = 50, min_confidence: float = 0.6, 
                                        doc_id: str = None, force_commit: bool = False):
-        """Build relationships using sparse approach for memory efficiency"""
+        """Build relationships with optimized UUID handling and memory management"""
         
         engine = self.db_connection.get_engine()
         
-        # Get all chunks with embeddings using correct table/column names
-        # If doc_id is provided, filter chunks by that document
-        with engine.connect() as conn:
+        # Get chunks with embeddings - maintain UUID objects from start
+        with engine.connect() as conn:            
             if doc_id:
                 logger.info(f"Building relationships for document: {doc_id}")
+                doc_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, doc_id)
+                
                 chunks_data = conn.execute(text("""
-                    SELECT id, content, transformer_embedding
+                    SELECT id, content, hoprag_embedding, chunk_index
                     FROM doc_chunks 
-                    WHERE transformer_embedding IS NOT NULL
+                    WHERE hoprag_embedding IS NOT NULL
                     AND doc_id = :doc_id
                     ORDER BY id
-                """), {"doc_id": doc_id}).fetchall()
+                """), {"doc_id": doc_uuid}).fetchall()
             else:
                 chunks_data = conn.execute(text("""
-                    SELECT id, content, transformer_embedding
+                    SELECT id, content, hoprag_embedding, chunk_index
                     FROM doc_chunks 
-                    WHERE transformer_embedding IS NOT NULL
+                    WHERE hoprag_embedding IS NOT NULL
                     ORDER BY id
                 """)).fetchall()
         
@@ -308,32 +361,70 @@ class HopRAGGraphProcessor:
         
         logger.info(f"Building relationships for {len(chunks_data)} chunks")
         
-        # Convert to numpy for efficient operations
-        chunk_ids = [row.id for row in chunks_data]
-        embeddings = np.array([row.transformer_embedding for row in chunks_data])
+        # Create ChunkData objects with consistent UUID handling from the start
+        chunk_objects = []
+        embeddings_list = []
+        
+        for row in chunks_data:
+            # Use cached UUID conversion only once per chunk
+            chunk_uuid = self._get_cached_uuid(row.id)
+            
+            # Parse embedding efficiently
+            try:
+                if isinstance(row.hoprag_embedding, str):
+                    clean_str = row.hoprag_embedding.strip('[]')
+                    embedding_values = [float(x.strip()) for x in clean_str.split(',')]
+                    embedding_array = np.array(embedding_values)
+                else:
+                    embedding_array = np.array(row.hoprag_embedding)
+                
+                # Validate embedding
+                if embedding_array.size == 0 or embedding_array.ndim == 0:
+                    continue
+                
+                if embedding_array.ndim == 2 and embedding_array.shape[0] == 1:
+                    embedding_array = embedding_array.flatten()
+                
+                if len(embedding_array) < 10:  # Filter out suspicious embeddings
+                    continue
+                
+                chunk_obj = ChunkData(
+                    chunk_id=chunk_uuid,
+                    content=row.content,
+                    embedding=embedding_array,
+                    chunk_index=row.chunk_index
+                )
+                
+                chunk_objects.append(chunk_obj)
+                embeddings_list.append(embedding_array)
+                
+            except Exception as e:
+                logger.warning(f"Error processing embedding for chunk {row.id}: {e}")
+                continue
+        
+        if not chunk_objects:
+            logger.error("No valid embeddings found after filtering")
+            return
+        
+        logger.info(f"Valid chunk objects created: {len(chunk_objects)}")
+        
+        # Stack embeddings for nearest neighbor search
+        embeddings = np.vstack(embeddings_list)
+        logger.info(f"Created embeddings matrix with shape: {embeddings.shape}")
         
         # Use approximate nearest neighbors for efficiency
-        nbrs = NearestNeighbors(n_neighbors=min(max_neighbors, len(chunks_data)), 
+        nbrs = NearestNeighbors(n_neighbors=min(max_neighbors, len(chunk_objects)), 
                               algorithm='auto', metric='euclidean')
         nbrs.fit(embeddings)
         
         all_relationships = []
         batch_size = 100
         
-        for i in range(0, len(chunks_data), batch_size):
-            batch_end = min(i + batch_size, len(chunks_data))
-            batch_chunks = []
+        # Process in batches
+        for i in range(0, len(chunk_objects), batch_size):
+            batch_end = min(i + batch_size, len(chunk_objects))
+            batch_chunks = chunk_objects[i:batch_end]
             
-            # Create ChunkData objects for current batch
-            for j in range(i, batch_end):
-                chunk_data = ChunkData(
-                    chunk_id=chunk_ids[j],
-                    content=chunks_data[j].content,
-                    embedding=embeddings[j]
-                )
-                batch_chunks.append(chunk_data)
-            
-            # Find neighbors and detect relationships
             for k, source_chunk in enumerate(batch_chunks):
                 actual_index = i + k
                 
@@ -343,96 +434,80 @@ class HopRAGGraphProcessor:
                 # Create target chunks from neighbors
                 target_chunks = []
                 for neighbor_idx in neighbor_indices[0]:
-                    if neighbor_idx != actual_index:  # Skip self
-                        target_chunk = ChunkData(
-                            chunk_id=chunk_ids[neighbor_idx],
-                            content=chunks_data[neighbor_idx].content,
-                            embedding=embeddings[neighbor_idx]
-                        )
-                        target_chunks.append(target_chunk)
+                    if neighbor_idx != actual_index:
+                        target_chunks.append(chunk_objects[neighbor_idx])
                 
-                # Detect relationships
+                # Detect relationships - no UUID conversions needed
                 relationships = self.relationship_detector.detect_relationships_batch(
                     [source_chunk], target_chunks
                 )
                 
-                # Filter by confidence
-                filtered_relationships = [
-                    rel for rel in relationships 
-                    if rel.confidence >= min_confidence
-                ]
-                
-                all_relationships.extend(filtered_relationships)
+                # Filter by confidence - relationships already have UUID objects
+                for rel in relationships:
+                    if rel.confidence >= min_confidence:
+                        all_relationships.append(rel)
             
-            logger.info(f"Processed batch {i//batch_size + 1}/{(len(chunks_data) + batch_size - 1)//batch_size}")
-            
-            # Cleanup memory
-            del batch_chunks
+            logger.info(f"Processed batch {i//batch_size + 1}/{(len(chunk_objects) + batch_size - 1)//batch_size}")
             gc.collect()
         
-        # Insert relationships (using ORM to ensure consistency)
+        # Insert relationships with optimized handling
         if all_relationships:
-            logger.info(f"Inserting {len(all_relationships)} relationships into database")
-            
-            # Create relationships table if it doesn't exist
-            with engine.connect() as conn:
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS logical_relationships (
-                        id SERIAL PRIMARY KEY,
-                        source_chunk_id INTEGER NOT NULL,
-                        target_chunk_id INTEGER NOT NULL,
-                        relationship_type VARCHAR(50) NOT NULL,
-                        confidence FLOAT NOT NULL,
-                        evidence TEXT,
-                        method VARCHAR(50) DEFAULT 'rule_based',
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (source_chunk_id) REFERENCES doc_chunks(id),
-                        FOREIGN KEY (target_chunk_id) REFERENCES doc_chunks(id)
-                    )
-                """))
-                conn.commit()
-                
-                # Insert relationships in batches for better performance
-                try:
-                    # Use batch execution for better performance
-                    for i in range(0, len(all_relationships), 100):
-                        batch = all_relationships[i:i+100]
-                        # Execute batch as transaction
-                        conn.begin()
-                        for rel in batch:
-                            conn.execute(text("""
-                                INSERT INTO logical_relationships 
-                                (source_chunk_id, target_chunk_id, relationship_type, confidence, evidence, method)
-                                VALUES (:source_id, :target_id, :rel_type, :confidence, :evidence, :method)
-                            """), {
-                                "source_id": rel.source_id,
-                                "target_id": rel.target_id,
-                                "rel_type": rel.relationship_type,
-                                "confidence": rel.confidence,
-                                "evidence": rel.evidence,
-                                "method": rel.method
-                            })
-                        conn.commit()
-                        logger.info(f"Inserted batch {i//100 + 1} of {(len(all_relationships) + 99)//100}")
-                        
-                    # Force commit if requested (extra safety)
-                    if force_commit:
-                        conn.commit()
-                        logger.info("Forced final commit of relationship data")
-                
-                except Exception as e:
-                    logger.error(f"Error inserting relationships: {e}")
-                    conn.rollback()
-                    raise
-            
-            logger.info(f"Successfully inserted {len(all_relationships)} relationships into logical_relationships table")
+            await self._insert_relationships_optimized(all_relationships)
         else:
             logger.warning("No relationships detected to insert")
         
         # Cleanup
-        del embeddings, all_relationships
+        del embeddings, all_relationships, chunk_objects
         gc.collect()
-    
+
+    async def _insert_relationships_optimized(self, relationships: List[RelationshipScore]):
+        """Insert relationships with optimized UUID handling"""
+        logger.info(f"Inserting {len(relationships)} relationships into database")
+        
+        # Convert RelationshipScore objects to LogicalRelationshipORM objects
+        relationship_orms = []
+        for rel in relationships:
+            try:
+                relationship_orm = LogicalRelationshipORM(
+                    id=uuid.uuid4(),
+                    source_chunk_id=rel.source_id,  # Direct UUID usage
+                    target_chunk_id=rel.target_id,  # Direct UUID usage
+                    relationship_type=rel.relationship_type,
+                    confidence=float(rel.confidence),
+                    evidence=rel.evidence,
+                    method=rel.method
+                )
+                relationship_orms.append(relationship_orm)
+                
+            except Exception as e:
+                logger.warning(f"Failed to create relationship ORM for {rel.source_id} -> {rel.target_id}: {e}")
+                continue
+        
+        logger.info(f"Successfully created {len(relationship_orms)} relationship ORM objects")
+        
+        # Use batch processing for database insertion
+        try:
+            batch_size = 100
+            successful_uploads = 0
+            
+            for i in range(0, len(relationship_orms), batch_size):
+                batch = relationship_orms[i:i+batch_size]
+                
+                success = self.db_connection.upload(batch, table='logical_relationships')
+                
+                if not success:
+                    logger.error(f"Failed to upload relationship batch {i//batch_size + 1}")
+                    continue
+                
+                successful_uploads += len(batch)
+                logger.info(f"Uploaded relationship batch {i//batch_size + 1} of {(len(relationship_orms) + batch_size - 1)//batch_size}")
+            
+            logger.info(f"Successfully uploaded {successful_uploads}/{len(relationship_orms)} relationships")
+            
+        except Exception as e:
+            logger.error(f"Error uploading relationships: {e}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
+
     async def bfs_multi_hop_retrieve(self, query: str, max_hops: int = 3, 
                                    top_k: int = 20) -> List[Dict]:
         """Optimized BFS multi-hop retrieval"""
@@ -440,21 +515,19 @@ class HopRAGGraphProcessor:
         engine = self.db_connection.get_engine()
         
         with engine.connect() as conn:
-            # Optimized BFS query with correct table names
+            # Fixed BFS query with correct CTE syntax            
             result = conn.execute(text("""
                 WITH RECURSIVE hop_expansion AS (
-                    -- Initial query matching with relevance scoring
+                    -- Initial query matching (no ORDER BY or LIMIT allowed here)
                     SELECT 
                         dc.id as chunk_id,
                         dc.content,
                         ARRAY[dc.id] as path,
                         0 as hops,
-                        1.0 as confidence,
-                        ts_rank(to_tsvector('english', dc.content), plainto_tsquery('english', :query)) as initial_relevance
+                        CAST(1.0 AS DOUBLE PRECISION) as confidence,
+                        CAST(ts_rank(to_tsvector('english', dc.content), plainto_tsquery('english', :query)) AS DOUBLE PRECISION) as initial_relevance
                     FROM doc_chunks dc
                     WHERE to_tsvector('english', dc.content) @@ plainto_tsquery('english', :query)
-                    ORDER BY initial_relevance DESC
-                    LIMIT 5
                     
                     UNION ALL
                     
@@ -474,6 +547,31 @@ class HopRAGGraphProcessor:
                       AND he.confidence > 0.4
                       AND NOT (lr.target_chunk_id = ANY(he.path))
                       AND array_length(he.path, 1) < 20
+                ),
+                -- Separate CTE to get top initial matches
+                top_initial AS (
+                    SELECT chunk_id, content, hops, confidence, initial_relevance
+                    FROM hop_expansion
+                    WHERE hops = 0
+                    ORDER BY initial_relevance DESC
+                    LIMIT 5
+                ),
+                -- Combine top initial matches with their expansions
+                filtered_expansion AS (
+                    SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
+                    FROM hop_expansion he
+                    WHERE he.hops = 0 
+                      AND he.chunk_id IN (SELECT chunk_id FROM top_initial)
+                    
+                    UNION ALL
+                    
+                    SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
+                    FROM hop_expansion he
+                    WHERE he.hops > 0
+                      AND EXISTS (
+                          SELECT 1 FROM top_initial ti 
+                          WHERE ti.chunk_id = ANY(he.path)
+                      )
                 )
                 SELECT DISTINCT 
                     chunk_id, 
@@ -481,7 +579,7 @@ class HopRAGGraphProcessor:
                     hops, 
                     confidence,
                     initial_relevance
-                FROM hop_expansion
+                FROM filtered_expansion
                 WHERE confidence > 0.3
                 ORDER BY confidence DESC, initial_relevance DESC, hops ASC
                 LIMIT :top_k;
@@ -489,7 +587,7 @@ class HopRAGGraphProcessor:
         
         return [dict(row._mapping) for row in result]
     
-    async def analyze_graph_structure(self, chunk_ids: List[int]) -> List[GraphAnalysisResult]:
+    async def analyze_graph_structure(self, chunk_ids: List[str]) -> List[GraphAnalysisResult]:  # Changed parameter type
         """Analyze graph structure and compute centrality measures"""
         
         if not chunk_ids:
@@ -499,7 +597,7 @@ class HopRAGGraphProcessor:
         
         # Get subgraph data with correct table names
         with engine.connect() as conn:
-            # Get nodes
+            # Get nodes - convert chunk_ids to list for PostgreSQL array compatibility
             nodes_data = conn.execute(text("""
                 SELECT id as chunk_id, content 
                 FROM doc_chunks 
@@ -663,9 +761,9 @@ class HopRAGGraphProcessor:
     
     async def close(self):
         """Cleanup resources"""
-        # No need to close Connection as it's synchronous
         self.executor.shutdown(wait=True)
-        logger.info("Graph processor closed")
+        self._uuid_cache.clear()
+        logger.info("Optimized graph processor closed")
 
 class HopRAGClassifier:
     """
@@ -974,12 +1072,6 @@ async def main():
         
         results = await processor.get_top_ranked_nodes(test_query, max_hops=3)
         
-        # Save results
-        output_file = f"hoprag_results_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(output_file, 'w') as f:
-            json.dump(results, f, indent=2, default=str)
-        
-        logger.info(f"Results saved to: {output_file}")
         logger.info(f"Found {results['total_nodes']} total nodes, returning top 20")
         logger.info(f"Execution time: {results['execution_time_ms']}ms")
         
@@ -987,20 +1079,17 @@ async def main():
         print(f"\n=== HopRAG Results Summary ===")
         print(f"Query: {results['query']}")
         print(f"Total nodes found: {results['total_nodes']}")
-        print(f"Execution time: {results['execution_time_ms']}ms")
-        print(f"Communities found: {results['graph_stats']['communities_found']}")
-        print(f"\nTop 5 nodes:")
+        print(f"Top 5 nodes:")
         for i, node in enumerate(results['top_nodes'][:5], 1):
             print(f"{i}. Score: {node['combined_score']:.3f} | Content: {node['content'][:100]}...")
         
         # Classification
-        logger.info("Classifying top nodes...")
         classifier = HopRAGClassifier()
+        logger.info("Classifying top nodes...")
         classification_results = classifier.classify_nodes(results)
         
-        # Save classification results
-        classifier.save_classification_results(classification_results)
-        
+        print(f"\nCommunities found: {results['graph_stats']['communities_found']}")
+        print(f"Execution time: {results['execution_time_ms']}ms")
         await processor.close()
         
     except Exception as e:

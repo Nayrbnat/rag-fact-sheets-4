@@ -31,4 +31,6 @@ asyncpg
 numpy
 hf_xet
 supabase
+pytesseract
+openai
 -c constraints.txt
