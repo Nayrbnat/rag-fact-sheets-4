@@ -1,7 +1,7 @@
 """
 Pydantic schema models for the climate policy extractor.
 """
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from typing import List, Dict, Any, Optional, Union, Tuple
 from uuid import UUID
 from pydantic import BaseModel, Field, validator
@@ -28,11 +28,11 @@ class DatabaseConfig(BaseModel):
         import os
         return cls(
             url=os.getenv('DATABASE_URL', ''),
-            host=os.getenv('DB_HOST', 'localhost'),
-            port=int(os.getenv('DB_PORT', '5432')),
-            database=os.getenv('DB_NAME', 'hoprag_db'),
-            username=os.getenv('DB_USER', 'postgres'),
-            password=os.getenv('DB_PASSWORD', '')
+            # host=os.getenv('DB_HOST', 'localhost'),
+            # port=int(os.getenv('DB_PORT', '5432')),
+            # database=os.getenv('DB_NAME', 'hoprag_db'),
+            # username=os.getenv('DB_USER', 'postgres'),
+            # password=os.getenv('DB_PASSWORD', '')
         )
 
 class NDCDocumentModel(BaseModel):
@@ -81,8 +81,8 @@ class DocChunk(BaseModel):
     content_hash: Optional[str] = None
     
     # Timestamps
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
-    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(default_factory=datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default_factory=datetime.now(timezone.utc))
     
     class Config:
         from_attributes = True
@@ -111,7 +111,7 @@ class LogicalRelationship(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0)
     evidence: Optional[str] = None
     method: str = Field(default="rule_based")
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(default_factory=datetime.now(timezone.utc))
     
     @validator('relationship_type')
     def validate_relationship_type(cls, v):
@@ -119,12 +119,6 @@ class LogicalRelationship(BaseModel):
         if v.upper() not in allowed:
             raise ValueError(f'Must be one of {allowed}')
         return v.upper()
-
-class DatabaseConfig(BaseModel):
-    """Pydantic model for database configuration."""
-    url: str
-    create_tables: bool = False
-    echo: bool = False
 
 # ------------------------------------------------------------------------------------------------
 # LLM Response Models
