@@ -6,9 +6,16 @@ import logging
 import traceback
 import numpy as np
 from typing import List, Dict, Any, Optional, Union, Tuple
+
+import logging
+from group4py.src.database import Connection
+from group4py.src.embedding import TransformerEmbedding, CombinedEmbedding
+from group4py.src.helpers import Logger
+
 from sklearn.metrics.pairwise import cosine_similarity
 from sqlalchemy import text, func, create_engine
 import uuid
+
 from difflib import SequenceMatcher
 
 project_root = Path(__file__).resolve().parents[2]

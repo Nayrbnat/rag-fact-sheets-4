@@ -1,90 +1,25 @@
-"""
-################################################################################
-#                              ⚠️  DEPRECATION WARNING  ⚠️                   #
-################################################################################
-#                                                                              #
-#  THIS MODULE IS DEPRECATED AND SHOULD NOT BE USED!                          #
-#                                                                              #
-#  This module has been replaced by:                                          #
-#    • chunking.py - for the DocChunker class (was DocChunk)                  #
-#    • embedding.py - for embedding functionality                             #
-#                                                                              #
-#  Migration guide:                                                           #
-#    • DocChunk class → use DocChunker from chunking.py                       #
-#    • Embedding class → use TransformerEmbedding or CombinedEmbedding        #
-#      from embedding.py                                                       #
-#                                                                              #
-#  Please update your imports to use the new modules!                         #
-#                                                                              #
-################################################################################
-"""
-
 import sys
-import os
-import json
-import re
-import logging
-import torch
-import numpy as np
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union, Tuple
+import json
+import os
+import re
 from nltk.tokenize import sent_tokenize
-from gensim.models import Word2Vec
+import logging
+from datetime import datetime
 
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 import group4py
 from helpers import Logger, Test, TaskInfo
 
-# Create a standard logger instead of a Logger instance
+# Create a standard logger
 logger = logging.getLogger(__name__)
 
-# Add imports for model loading
-try:
-    from transformers import AutoTokenizer, AutoModel
-except ImportError:
-    logger.warning("Transformers library not installed. Using dummy embedding functionality.")
 
-# Model directories
-ENGLISH_MODEL_DIR = project_root / "models" / "english"
-MULTILINGUAL_MODEL_DIR = project_root / "models" / "multilingual"
-
-COUNTRY_LANG_MAP = {
-    'france': 'fr',
-    'french': 'fr',
-    'germany': 'de',
-    'german': 'de',
-    'spain': 'es',
-    'spanish': 'es',
-    'italy': 'it',
-    'italian': 'it',
-    'china': 'zh',
-    'chinese': 'zh',
-    'japan': 'ja',
-    'japanese': 'ja',
-    'russia': 'ru',
-    'russian': 'ru',
-    'brazil': 'pt',
-    'portuguese': 'pt',
-    'india': 'en',  # India often uses English for official documents
-    'usa': 'en',
-    'uk': 'en',
-    'english': 'en',
-    'mexico': 'es',
-    'argentina': 'es',
-    'colombia': 'es',
-    'peru': 'es',
-    'chile': 'es',
-    'venezuela': 'es',
-}
-
-class DocChunk:
+class DocChunker:
     """
-    ⚠️⚠️⚠️ DEPRECATED CLASS ⚠️⚠️⚠️
-    
-    This class is deprecated! Use DocChunker from chunking.py instead.
-    
-    Chunk class. General methodology:
+    Document chunking class. General methodology:
         Input: Some form of documents (PDFs, etc.)
         Output: A list of chunks
     """
@@ -269,15 +204,12 @@ class DocChunk:
         Returns:
             List of cleaned and processed chunks
         """
-        # Use logging.getLogger() directly instead of the logger variable
-        logging.getLogger(__name__).info(f"Cleaning {len(elements)} document chunks")
+        logger.info(f"Cleaning {len(elements)} document chunks")        # Apply cleaning strategies in sequence using proper static method references
+        cleaned_elements = DocChunker._DocChunker.merge_short_chunks(elements, min_length)
+        cleaned_elements = DocChunker._DocChunker.split_long_chunks(cleaned_elements, max_length)
+        cleaned_elements = DocChunker._DocChunker.remove_gibberish(cleaned_elements)
         
-        # Apply cleaning strategies in sequence using proper static method references
-        cleaned_elements = DocChunk._DocChunk.merge_short_chunks(elements, min_length)
-        cleaned_elements = DocChunk._DocChunk.split_long_chunks(cleaned_elements, max_length)
-        cleaned_elements = DocChunk._DocChunk.remove_gibberish(cleaned_elements)
-        
-        logging.getLogger(__name__).info(f"Cleaning complete. Produced {len(cleaned_elements)} chunks")
+        logger.info(f"Cleaning complete. Produced {len(cleaned_elements)} chunks")
         return cleaned_elements
 
     @Logger.debug_log()
@@ -300,9 +232,8 @@ class DocChunk:
         output_data = {
             "metadata": {
                 "total_chunks": len(chunks),
-                "timestamp": TaskInfo.get_timestamp(),
-                "version": TaskInfo.get_version(),
-                "source": "chunk_embed.py"
+                "timestamp": datetime.now().isoformat(),
+                "source": "chunking.py"
             },
             "chunks": chunks
         }
@@ -313,7 +244,7 @@ class DocChunk:
             first_chunk = chunks[0]
             metadata = first_chunk.get('metadata', {})
             country = metadata.get('country', 'unknown')
-            date = metadata.get('submission_date', TaskInfo.get_date_string())
+            date = metadata.get('submission_date', datetime.now().strftime('%Y%m%d'))
             
             # Clean country name for filename (remove special chars, lowercase)
             clean_country = re.sub(r'[^\w]', '_', country.lower())
@@ -330,7 +261,6 @@ class DocChunk:
             # Convert to JSON and save to file
             with open(output_path, 'w', encoding='utf-8') as file:
                 json.dump(output_data, file, indent=2, cls=ExtractedDataEncoder)
-                
             logger.info(f"Successfully generated JSON with {len(chunks)} chunks at {output_path}")
             return str(output_path)
             
@@ -338,7 +268,7 @@ class DocChunk:
             logger.error(f"Error generating JSON file: {e}")
             return ""
 
-    class _DocChunk:
+    class _DocChunker:
         """
         Internal chunk class with various cleaning strategies.
         """
@@ -388,14 +318,6 @@ class DocChunk:
                             for pid in element['metadata']['paragraph_ids']:
                                 if pid not in current_chunk['metadata']['paragraph_ids']:
                                     current_chunk['metadata']['paragraph_ids'].append(pid)
-                        
-                        # Update country if not set yet but available in this element
-                        if not current_chunk['metadata'].get('country') and element['metadata'].get('country'):
-                            current_chunk['metadata']['country'] = element['metadata'].get('country')
-                        
-                        # Update document_title if not set yet but available in this element
-                        if not current_chunk['metadata'].get('document_title') and element['metadata'].get('document_title'):
-                            current_chunk['metadata']['document_title'] = element['metadata'].get('document_title')
                 else:
                     # Current chunk is long enough, add to results
                     merged_elements.append(current_chunk)
@@ -535,6 +457,7 @@ class DocChunk:
             
             return cleaned_elements
 
+
 def _is_severely_corrupted(text: str) -> bool:
     """
     Check if text is so corrupted it should be completely rejected.
@@ -571,6 +494,7 @@ def _is_severely_corrupted(text: str) -> bool:
     
     return False
 
+
 def _clean_corrupted_text(text: str) -> str:
     """
     Clean text with character corruption issues.
@@ -603,384 +527,10 @@ def _clean_corrupted_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text)
     
     return text.strip()
-    
-class Embedding:
 
-    """
-    ⚠️⚠️⚠️ DEPRECATED CLASS ⚠️⚠️⚠️
-    
-    This class is deprecated! Use TransformerEmbedding or CombinedEmbedding 
-    from embedding.py instead.
-    
-    Embedding class. General methodology:
-        Input: DocChunks, in the form of strings
-        Output: Embeddings, in the form of a list of floats
-    """
-    def __init__(self):
-        self.english_model = None
-        self.english_tokenizer = None
-        self.multilingual_model = None
-        self.multilingual_tokenizer = None
-        self.models_loaded = False
-
-    @Logger.debug_log()
-    def load_models(self):
-        """Load embedding models if they haven't been loaded yet."""
-        if not self.models_loaded:
-            try:
-                self.english_tokenizer, self.english_model = self._Embedding.load_english_model()
-                self.multilingual_tokenizer, self.multilingual_model = self._Embedding.load_multilingual_model()
-                self.models_loaded = True
-                logger.info("Successfully loaded embedding models")
-            except Exception as e:
-                logger.error(f"Failed to load embedding models: {e}")
-                # Continue with dummy embeddings
-    
-    @Logger.debug_log()
-    def embed_many(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Embeds multiple chunks using appropriate language models.
-        
-        Args:
-            chunks: List of chunks to embed
-            
-        Returns:
-            List of chunks with embeddings added
-        """
-        # Try to load models if not already loaded
-        if not self.models_loaded:
-            self.load_models()
-        
-        embedded_chunks = []
-        for chunk in chunks:
-            # Determine language for this chunk
-            filename = chunk.get('metadata', {}).get('filename', '')
-            metadata = chunk.get('metadata', {})
-            language = self._Embedding.determine_language(filename, metadata)
-            
-            # Add language to metadata if not already present
-            if 'metadata' not in chunk:
-                chunk['metadata'] = {}
-            chunk['metadata']['language'] = language
-            
-            # Get embedding for this chunk
-            embedding = self.embed_transformer(chunk)
-            
-            # Add embedding to chunk
-            chunk['embedding'] = embedding
-            embedded_chunks.append(chunk)
-            
-        return embedded_chunks
-
-    @Logger.debug_log()
-    def embed_transformer(self, input_data) -> List[float]:
-        """
-        Generate an embedding for a single chunk.
-        
-        Args:
-            input_data: Either a string of text or a chunk dictionary
-            
-        Returns:
-            List of embedding values (vector)
-        """
-        # Handle empty input
-        if not input_data:
-            return []
-        
-        # Extract text and language based on input type
-        if isinstance(input_data, str):
-            text = input_data
-            language = 'en'  # Default to English for string input
-        else:
-            # Assume it's a dictionary chunk
-            text = input_data.get('text', '')
-            language = input_data.get('metadata', {}).get('language', 'en')
-    
-        # Ensure models are loaded
-        if not self.models_loaded:
-            self.load_models()
-    
-        # Use appropriate model based on language
-        if language == 'en' and self.english_model is not None:
-            embedding = self._Embedding._embed_strategy_one(text, self.english_tokenizer, self.english_model)
-        elif self.multilingual_model is not None:
-            embedding = self._Embedding._embed_strategy_two(text, self.multilingual_tokenizer, self.multilingual_model)
-        else:
-            # If models failed to load, return dummy embedding
-            logger.warning("No embedding models available, returning empty embedding")
-            embedding = []
-            
-        return embedding
-
-    class _Embedding:
-        """
-        Internal embedding class.
-        """
-        @staticmethod
-        def _embed_strategy_one(text, tokenizer, model):
-            """
-            Use English model to embed text.
-            
-            Args:
-                text: The text to embed
-                tokenizer: The tokenizer to use
-                model: The model to use
-                
-            Returns:
-                List of embedding values
-            """
-            try:
-                inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512, padding=True)
-                with torch.no_grad():
-                    outputs = model(**inputs)
-                # Use CLS token as the sentence embedding
-                embedding = outputs.last_hidden_state[:, 0, :].squeeze().tolist()
-                return embedding
-            except Exception as e:
-                logger.error(f"Error in English embedding: {e}")
-                return []
-
-        @staticmethod
-        def _embed_strategy_two(text, tokenizer, model):
-            """
-            Use multilingual model to embed text.
-            
-            Args:
-                text: The text to embed
-                tokenizer: The tokenizer to use
-                model: The model to use
-                
-            Returns:
-                List of embedding values
-            """
-            try:
-                inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512, padding=True)
-                with torch.no_grad():
-                    outputs = model(**inputs)
-                # Use CLS token as the sentence embedding
-                embedding = outputs.last_hidden_state[:, 0, :].squeeze().tolist()
-                return embedding
-            except Exception as e:
-                logger.error(f"Error in multilingual embedding: {e}")
-                return []
-                
-        @staticmethod
-        def determine_language(filename, metadata=None):
-            """
-            Determine the language from the filename or metadata.
-            Falls back to language detection only when needed.
-            
-            Args:
-                filename (str): The filename that might contain language information
-                metadata (dict): Optional metadata that might contain language information
-                
-            Returns:
-                str: Two-letter language code (defaults to 'en' when uncertain)
-            """
-            # First check if metadata already contains language information
-            if metadata and 'language' in metadata and metadata['language']:
-                return metadata['language'].lower()
-                
-            # Check for language code in filename (like "document_fr.pdf" or "fr_document.pdf")
-            lang_pattern = r'[_\-\s\.](fr|es|de|it|zh|ja|ru|pt|en)[_\-\s\.]'
-            lang_match = re.search(lang_pattern, filename.lower())
-            if lang_match:
-                return lang_match.group(1).lower()
-                
-            # Look for country names in filename or metadata that can indicate language
-            if metadata and 'country' in metadata and metadata['country']:
-                country = metadata['country'].lower()
-                for country_key, lang_code in COUNTRY_LANG_MAP.items():
-                    if country_key in country:
-                        return lang_code
-
-            # Check if filename contains country names
-            for country_key, lang_code in COUNTRY_LANG_MAP.items():
-                if country_key in filename.lower():
-                    return lang_code
-                    
-            # If we still don't have a language, try to detect it from content
-            # but we'll do this in the process_document_chunks function
-            # to avoid circular imports
-            
-            # Default to English if we can't determine language
-            return 'en'
-
-        @staticmethod
-        def load_english_model():
-            """
-            Load the English language model (ClimateBERT) from local directory.
-            If not available, attempt to download it from Hugging Face.
-            Returns tokenizer and model as a tuple.
-            """
-            logger.info(f"Loading English model from {ENGLISH_MODEL_DIR}")
-            try:
-                # Check if local model exists in proper directory structure
-                local_model_path = project_root / "local_models" / "distilroberta-base"
-                
-                if os.path.exists(local_model_path):
-                    logger.info(f"Found local English model at {local_model_path}")
-                    try:
-                        # Attempt to load directly from the local path
-                        tokenizer = AutoTokenizer.from_pretrained("distilroberta-base")
-                        model = AutoModel.from_pretrained("distilroberta-base")
-                        logger.info("Successfully loaded English model from HuggingFace")
-                        return tokenizer, model
-                    except Exception as local_e:
-                        logger.warning(f"Failed to load from local path: {local_e}")
-                
-                # If local loading fails or model doesn't exist, download from Hugging Face
-                logger.info("Downloading English model from Hugging Face")
-                model_name = "distilroberta-base"
-                tokenizer = AutoTokenizer.from_pretrained(model_name)
-                model = AutoModel.from_pretrained(model_name)
-                
-                logger.info(f"Successfully loaded English model from Hugging Face")
-                return tokenizer, model
-            except Exception as e:
-                logger.error(f"Could not load or download English model: {e}")
-                raise
-
-        @staticmethod
-        def load_multilingual_model():
-            """
-            Load the multilingual model (XLM-RoBERTa) from local directory.
-            If not available, attempt to download it from Hugging Face.
-            Returns tokenizer and model as a tuple.
-            """
-            logger.info(f"Loading multilingual model from {MULTILINGUAL_MODEL_DIR}")
-            try:
-                # Check if local model exists in proper directory structure
-                local_model_path = project_root / "local_models" / "xlm-roberta-base"
-                
-                if os.path.exists(local_model_path):
-                    logger.info(f"Found local multilingual model at {local_model_path}")
-                    try:
-                        # Attempt to load directly from the local path
-                        tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-base")
-                        model = AutoModel.from_pretrained("xlm-roberta-base")
-                        logger.info("Successfully loaded multilingual model from HuggingFace")
-                        return tokenizer, model
-                    except Exception as local_e:
-                        logger.warning(f"Failed to load from local path: {local_e}")
-                
-                # If local loading fails or model doesn't exist, download from Hugging Face
-                logger.info("Downloading multilingual model from Hugging Face")
-                model_name = "xlm-roberta-base"
-                tokenizer = AutoTokenizer.from_pretrained(model_name)
-                model = AutoModel.from_pretrained(model_name)
-                
-                logger.info(f"Successfully loaded multilingual model from Hugging Face")
-                return tokenizer, model
-            except Exception as e:
-                logger.error(f"Could not load or download multilingual model: {e}")
-                raise
-
-    @Logger.debug_log()
-    def word2vec_embedding(self, chunks: List[Dict[str, Any]], vector_size=300, window=10, min_count=2, workers=4, sg=1) -> List[Dict[str, Any]]:
-        """
-        Generate Word2Vec embeddings for a list of document chunks.
-        
-        Args:
-            chunks: List of chunks to embed
-            vector_size: Dimensionality of the word vectors
-            window: Maximum distance between the current and predicted word
-            min_count: Ignores words with frequency lower than this
-            workers: Number of CPU cores to use
-            sg: Training algorithm: 1 for skip-gram; 0 for CBOW
-            
-        Returns:
-            List of chunks with Word2Vec embeddings added
-        """
-        if not chunks:
-            logger.warning("No chunks provided for Word2Vec embedding")
-            return []
-            
-        logger.info(f"Generating Word2Vec embeddings for {len(chunks)} chunks")
-        
-        # Preprocess all texts and prepare for training
-        texts = [chunk.get('text', '') for chunk in chunks]
-        tokenized_docs = [self._preprocess_text(text) for text in texts]
-        
-        # Filter out empty documents
-        valid_indices = [i for i, tokens in enumerate(tokenized_docs) if tokens]
-        if not valid_indices:    
-            logger.warning("No valid documents for Word2Vec training after preprocessing")
-            return chunks
-        
-        valid_tokenized_docs = [tokenized_docs[i] for i in valid_indices]
-        
-        # Train Word2Vec model on tokenized documentswv)}")
-        logger.info(f"Training Word2Vec model with vector_size={vector_size}, window={window}, min_count={min_count}")
-        w2v_model = self._train_word2vec(valid_tokenized_docs, vector_size, window, min_count, workers, sg)
-        logger.info(f"Word2Vec vocabulary size: {len(w2v_model.wv)}")
-        
-        # Generate embeddings for each chunk
-        for i, chunk in enumerate(chunks):
-            text = chunk.get('text', '')
-            embedding = self._create_document_embedding(text, w2v_model)
-            
-            # Add to chunkunks")
-            chunk['w2v_embedding'] = embedding.tolist() if isinstance(embedding, np.ndarray) else embedding
-            
-        logger.info(f"Successfully generated Word2Vec embeddings for {len(chunks)} chunks")
-        return chunks
-        
-    def _preprocess_text(self, text):
-        """Preprocess text for Word2Vec - simplified version using whole text"""
-        if not isinstance(text, str):
-            return []
-        
-        # Simple whitespace tokenization with lowercase conversion
-        tokens = text.lower().split()
-        
-        # Basic filtering for non-words and very short words
-        tokens = [token.strip('.,;:!?()[]{}"\'-') for token in tokens]
-        tokens = [token for token in tokens if len(token) > 1 and any(c.isalpha() for c in token)]
-        
-        return tokens
-
-    def _create_document_embedding(self, text, model):
-        """Create document embedding directly from text"""
-        # Preprocess the text to get tokens
-        tokens = self._preprocess_text(text)
-        
-        if not tokens:
-            return np.zeros(model.vector_size)
-        
-        # Get embeddings for valid tokens
-        token_embeddings = [model.wv[token] for token in tokens if token in model.wv]
-        
-        if not token_embeddings:
-            return np.zeros(model.vector_size)
-        
-        # Average the embeddings
-        return np.mean(token_embeddings, axis=0)
-
-    def _train_word2vec(self, tokenized_docs, vector_size=100, window=5, min_count=1, workers=4, sg=1):
-        """
-        Train a Word2Vec model on a list of tokenized documents.
-        
-        Args:
-            tokenized_docs: List of lists, where each inner list contains tokens from a document
-            vector_size: Dimensionality of the word vectors
-            window: Maximum distance between the current and predicted word
-            min_count: Ignores words with frequency lower than this
-            workers: Number of CPU cores to use
-            sg: Training algorithm: 1 for skip-gram; 0 for CBOW
-        
-        Returns:
-            Trained Word2Vec model
-        """
-        model = Word2Vec(sentences=tokenized_docs, 
-                         vector_size=vector_size, 
-                         window=window, 
-                         min_count=min_count, 
-                         workers=workers,
-                         sg=sg)
-        return model
 
 class ExtractedDataEncoder(json.JSONEncoder):
+    """Custom JSON encoder for handling special data types."""
     def default(self, obj):
         # Handle CoordinatesMetadata specifically
         if obj.__class__.__name__ == 'CoordinatesMetadata':
@@ -995,9 +545,14 @@ class ExtractedDataEncoder(json.JSONEncoder):
             }
         
         # Handle other types
-        if hasattr(obj, '__dict__'): return obj.__dict__
-        try: return dict(obj)
-        except: pass
-        try: return list(obj)
-        except: pass
+        if hasattr(obj, '__dict__'): 
+            return obj.__dict__
+        try: 
+            return dict(obj)
+        except: 
+            pass
+        try: 
+            return list(obj)
+        except: 
+            pass
         return str(obj)

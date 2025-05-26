@@ -1,3 +1,24 @@
+"""
+################################################################################
+#                              ⚠️  DEPRECATION WARNING  ⚠️                   #
+################################################################################
+#                                                                              #
+#  THIS SCRIPT IS DEPRECATED AND SHOULD NOT BE USED!                          #
+#                                                                              #
+#  This script has been replaced by:                                          #
+#    • 3_chunk.py - for document chunking                                     #
+#    • 3.5_embed.py - for embedding generation                                #
+#                                                                              #
+#  Using this script may cause:                                               #
+#    • Data inconsistencies                                                   #
+#    • Performance issues                                                     #
+#    • Conflicts with newer implementations                                   #
+#                                                                              #
+#  Please use the new scripts instead!                                        #
+#                                                                              #
+################################################################################
+"""
+
 import sys
 from pathlib import Path
 import traceback
@@ -22,7 +43,10 @@ project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 import group4py
 from group4py.src.extract_document import extract_text_from_pdf
+#============================= DEPRECATED IMPORTS ============================
 from group4py.src.chunk_embed import DocChunk as DocChunker, Embedding
+#============================================================================
+
 from group4py.src.helpers import Logger, Test, TaskInfo
 from group4py.src.schema import DocChunk
 from group4py.src.database import Connection, NDCDocumentORM as Document, DocChunkORM
@@ -552,8 +576,14 @@ async def process_file_many(file_path):
 
 @Logger.log(log_file=project_root / "logs/process.log", log_level="INFO")
 async def run_script(force_reprocess: bool = False):
+    """
+    WARNING: THIS SCRIPT IS NOW DEPRECATED, IT HAS BEEN REPLACED BY 3_chunk.py and 3.5_embed.py.
+    
+    YOU SHOULD NOT REFERENCE OR RUN THIS SCRIPT DIRECTLY.
+    """
     try:
-        logger.warning(f"\n\n[3_PROCESS] Running script with force_reprocess={force_reprocess}...")
+        logger.warning(f"\n\n[3_PROCESS] Running DEPRECATED script with force_reprocess={force_reprocess}...")
+        logger.warning(f"[3_PROCESS] ⚠️  PLEASE MIGRATE TO 3_chunk.py and 3.5_embed.py  ⚠️")
         file_paths = get_file_paths()
         
         # Show the progress bar for all file processing

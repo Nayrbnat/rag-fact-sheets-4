@@ -320,6 +320,7 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
+    output_file = Path(args.chunks_file).with_name(Path(args.chunks_file).stem + '_response.json')
     try:
         if args.chunks:
             # Legacy support: create temporary file from JSON string
