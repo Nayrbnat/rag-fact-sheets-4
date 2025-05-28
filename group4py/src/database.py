@@ -468,7 +468,7 @@ class Connection:
             logger.error(f"Error fixing string embeddings: {e}")
             return 0
 
-    def get_all_chunks_for_evaluation(self, country: Optional[str] = None, batch_size: int = 1000) -> List[Dict[str, Any]]:
+    def get_all_chunks_for_evaluation(self, country: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get all chunks from database for comprehensive evaluation.
         
@@ -502,7 +502,6 @@ class Connection:
                         FROM doc_chunks dc
                         JOIN documents d ON dc.doc_id = d.doc_id
                         WHERE d.country = :country
-                        AND dc.transformer_embedding IS NOT NULL
                         ORDER BY dc.id
                     """)
                     result = conn.execute(query, {"country": country}).fetchall()
@@ -523,7 +522,6 @@ class Connection:
                             d.title
                         FROM doc_chunks dc
                         JOIN documents d ON dc.doc_id = d.doc_id
-                        WHERE dc.transformer_embedding IS NOT NULL
                         ORDER BY dc.id
                     """)
                     result = conn.execute(query).fetchall()
@@ -546,10 +544,28 @@ class Connection:
                     all_chunks.append(chunk_dict)
                 
                 logger.info(f"Retrieved {len(all_chunks)} chunks for evaluation{' for country ' + country if country else ''}")
+                
+                # Debugging query
+                total_chunks = conn.execute(text("SELECT COUNT(*) FROM doc_chunks")).scalar()
+                print(f"[DATABASE] DEBUG: Total chunks in database: {total_chunks}")
+                
+                if country:
+                    country_chunks = conn.execute(
+                        text("SELECT COUNT(*) FROM doc_chunks WHERE country = :country"), 
+                        {"country": country}
+                    ).scalar()
+                    print(f"[DATABASE] DEBUG: Chunks for {country}: {country_chunks}")
+                
+                # Add debugging for the actual results
+                if all_chunks:
+                    retrieved_countries = set(chunk.get('country', 'Unknown') for chunk in all_chunks)
+                    print(f"[DATABASE] DEBUG: Retrieved chunks from countries: {sorted(retrieved_countries)}")
+                
                 return all_chunks
                 
         except Exception as e:
             logger.error(f"Error retrieving chunks for evaluation: {e}")
+            print(f"[DATABASE] ERROR: Failed to get chunks: {e}")
             return []
 
 
