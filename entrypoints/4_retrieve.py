@@ -18,8 +18,9 @@ sys.path.insert(0, str(project_root))
 import group4py
 from database import Connection
 from helpers.internal import Logger, Test, TaskInfo
-from evaluator import Evaluator, VectorComparison, RegexComparison, FuzzyRegexComparison
-from embedding import TransformerEmbedding, CombinedEmbedding
+from evaluator import Evaluator, VectorComparison, RegexComparison, FuzzyRegexComparison, GraphHopRetriever, UUIDEncoder
+from embed.transformer import TransformerEmbedding
+from embed.word2vec import Word2VecEmbedding
 
 from constants.prompts import (
     QUESTION_PROMPT_1, QUESTION_PROMPT_2, QUESTION_PROMPT_3, QUESTION_PROMPT_4,
@@ -28,8 +29,6 @@ from constants.prompts import (
 )
 from database import Connection
 from schema import DatabaseConfig
-
-
 
 # Dictionary mapping question numbers to their respective prompts
 QUESTION_PROMPTS = {
@@ -46,38 +45,40 @@ QUESTION_PROMPTS = {
 
 def embed_prompt(prompt):
     """
-    Embed a prompt using the embedding model.
+    Embed a prompt using both transformer and word2vec embedding models.
     
     Args:
         prompt: The text string to embed
         
     Returns:
-        list: Vector embedding of the prompt (list of floats)
+        tuple: (transformer_embedding, word2vec_embedding) - both as lists of floats
     """
     try:
-        # # First boost the prompt to enhance search performance
-        # booster = Booster()
-        # boosted_prompt = booster.boost_function(prompt)
-        # logger.debug(f"[4_RETRIEVE] Prompt boosted: {boosted_prompt[:50]}...")
-          # Initialize the embedding model, load models
-          
-        embedding_model = TransformerEmbedding()
-        embedding_model.load_models()
-
-        # Embed the prompt using transformer model
-        embedded_prompt = embedding_model.embed_transformer(prompt)
+        w2v_model_path = project_root / "local_models" / "word2vec"
+        # Initialize both embedding models
+        transformer_model = TransformerEmbedding()
+        transformer_model.load_models()
         
-        return embedded_prompt
+        word2vec_model = Word2VecEmbedding()
+        word2vec_model.load_global_model(str(w2v_model_path))
+
+        # Embed the prompt using both models
+        transformer_embedding = transformer_model.embed_transformer(prompt)
+        word2vec_embedding = word2vec_model.embed_text(prompt)
+        
+        return transformer_embedding, word2vec_embedding
     
     except Exception as e:
         traceback_string = traceback.format_exc()
         raise e
     
 
-def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: List[float] = None) -> List[Dict[str, Any]]:
+def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], 
+                   transformer_embedding: List[float] = None, 
+                   word2vec_embedding: List[float] = None) -> List[Dict[str, Any]]:
     """
-    Evaluate chunks using multiple comparison methods: vector similarity, regex patterns, and fuzzy matching.
-    Now handles chunks without embeddings gracefully.
+    Evaluate chunks using multiple comparison methods: transformer similarity, word2vec similarity, 
+    regex patterns, and fuzzy matching.
     """
     if not chunks:
         return []
@@ -89,10 +90,11 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
         
         chunks_with_similarity = []
         
-        if not db_connection.connect() or embedded_prompt is None:
+        if not db_connection.connect():
             # Fall back to chunks without similarity scores
             for chunk in chunks:
-                chunk['similarity_score'] = 0.0
+                chunk['transformer_similarity'] = 0.0
+                chunk['word2vec_similarity'] = 0.0
             chunks_with_similarity = chunks
         else:
             # Initialize VectorComparison with proper database connection
@@ -101,20 +103,38 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
             # Get chunk IDs for batch similarity calculation
             chunk_ids = [chunk['id'] for chunk in chunks]
             
-            # Calculate similarities in batch (now handles NULL embeddings)
-            similarities = vector_comp.batch_similarity_calculation(
-                chunk_ids=chunk_ids,
-                query_embedding=embedded_prompt,
-                embedding_type='transformer'
-            )
-            # Add similarity scores to chunks
+            # Calculate transformer similarities
+            transformer_similarities = {}
+            if transformer_embedding is not None:
+                transformer_similarities = vector_comp.batch_similarity_calculation(
+                    chunk_ids=chunk_ids,
+                    query_embedding=transformer_embedding,
+                    embedding_type='transformer'
+                )
+            
+            # Calculate word2vec similarities
+            word2vec_similarities = {}
+            if word2vec_embedding is not None:
+                word2vec_similarities = vector_comp.batch_similarity_calculation(
+                    chunk_ids=chunk_ids,
+                    query_embedding=word2vec_embedding,
+                    embedding_type='word2vec'
+                )
+            
+            # Add both similarity scores to chunks
             for chunk in chunks:
                 chunk_id = chunk['id']
-                similarity_score = similarities.get(chunk_id, 0.0)
-                similarity_score = similarities.get(str(chunk_id), 0.0)
                 
-                # Add similarity score to chunk
-                chunk['similarity_score'] = similarity_score
+                # Get transformer similarity
+                transformer_score = transformer_similarities.get(chunk_id, 0.0)
+                transformer_score = transformer_similarities.get(str(chunk_id), transformer_score)
+                chunk['transformer_similarity'] = transformer_score
+                
+                # Get word2vec similarity
+                word2vec_score = word2vec_similarities.get(chunk_id, 0.0)
+                word2vec_score = word2vec_similarities.get(str(chunk_id), word2vec_score)
+                chunk['word2vec_similarity'] = word2vec_score
+                
                 chunks_with_similarity.append(chunk)
         
         # Initialize comparison engines
@@ -132,7 +152,7 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
             # Start with the chunk as-is
             evaluated_chunk = chunk.copy()
             
-            # 2. Apply regex evaluation (keyword-based)
+            # Apply regex evaluation (keyword-based)
             try:
                 regex_eval = regex_comparison.evaluate_chunk_score(chunk_content, prompt)
                 evaluated_chunk['regex_evaluation'] = regex_eval
@@ -140,7 +160,6 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
                 evaluated_chunk['keyword_matches'] = regex_eval['keyword_matches']
                 evaluated_chunk['query_types'] = regex_eval.get('query_types', [])
                 
-                # Get keyword highlights for debugging/explanation
                 highlights = regex_comparison.get_keyword_highlights(chunk_content, prompt)
                 if highlights:
                     evaluated_chunk['keyword_highlights'] = highlights
@@ -150,7 +169,7 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
                 evaluated_chunk['keyword_matches'] = 0
                 evaluated_chunk['regex_evaluation'] = {'error': str(e)}
             
-            # 3. Apply fuzzy regex evaluation (context-based)
+            # Apply fuzzy regex evaluation (context-based)
             try:
                 fuzzy_eval = fuzzy_regex_comparison.evaluate_chunk_relevance(chunk_content, prompt)
                 evaluated_chunk['fuzzy_evaluation'] = fuzzy_eval
@@ -161,19 +180,22 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
                 evaluated_chunk['fuzzy_score'] = 0.0
                 evaluated_chunk['fuzzy_evaluation'] = {'error': str(e)}
             
-            # 4. Calculate combined score using all available methods
-            similarity_score = evaluated_chunk.get('similarity_score', 0.0)
+            # Calculate combined score using all available methods
+            transformer_score = evaluated_chunk.get('transformer_similarity', 0.0)
+            word2vec_score = evaluated_chunk.get('word2vec_similarity', 0.0)
             regex_score = evaluated_chunk.get('regex_score', 0.0)
             fuzzy_score = evaluated_chunk.get('fuzzy_score', 0.0)
             
             # Configurable weights for different scoring methods
-            vector_weight = 0.40  # Vector similarity has highest weight
-            regex_weight = 0.35   # Direct keyword matches
-            fuzzy_weight = 0.25   # Fuzzy contextual matching
+            transformer_weight = 0.25  # Transformer similarity
+            word2vec_weight = 0.20     # Word2Vec similarity  
+            regex_weight = 0.30        # Direct keyword matches
+            fuzzy_weight = 0.25        # Fuzzy contextual matching
             
             # Combine scores
             combined_score = (
-                vector_weight * similarity_score +
+                transformer_weight * transformer_score +
+                word2vec_weight * word2vec_score +
                 regex_weight * regex_score +
                 fuzzy_weight * fuzzy_score
             )
@@ -182,12 +204,15 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
             
             # Add information about how the score was calculated
             evaluated_chunk['score_weights'] = {
-                'vector_weight': vector_weight,
+                'transformer_weight': transformer_weight,
+                'word2vec_weight': word2vec_weight,
                 'regex_weight': regex_weight,
                 'fuzzy_weight': fuzzy_weight
             }
             
-            # Add to our collection of evaluated chunks
+            # Keep legacy 'similarity_score' for backward compatibility
+            evaluated_chunk['similarity_score'] = (transformer_score + word2vec_score) / 2
+            
             evaluated_chunks.append(evaluated_chunk)
         
         # Sort by combined score (highest first)
@@ -199,18 +224,20 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
         traceback_string = traceback.format_exc()
         # Return original chunks with 0.0 similarity scores if evaluation fails
         for chunk in chunks:
-            if 'similarity_score' not in chunk:
-                chunk['similarity_score'] = 0.0
+            if 'transformer_similarity' not in chunk:
+                chunk['transformer_similarity'] = 0.0
+            if 'word2vec_similarity' not in chunk:
+                chunk['word2vec_similarity'] = 0.0
         return chunks
 
-def retrieve_chunks(embedded_prompt, prompt, top_k=20, 
+def retrieve_chunks(embedded_prompts, prompt, top_k=20, 
                    ensure_indices=True, country=None, n_per_doc=None, min_similarity=0.0):
     """
     Retrieve and evaluate the most similar chunks from the database using comprehensive evaluation.
     First evaluates ALL chunks, then returns top ones based on weighted average score.
     
     Args:
-        embedded_prompt: The embedded query vector (list of floats)
+        embedded_prompts: Tuple of (transformer_embedding, word2vec_embedding)
         prompt: Original text prompt for evaluation
         embedding_type: Type of embedding to use ('transformer' or 'word2vec')
         top_k: Number of top similar chunks to retrieve
@@ -223,6 +250,9 @@ def retrieve_chunks(embedded_prompt, prompt, top_k=20,
         List of dictionaries containing evaluated chunks with comprehensive scores
     """
     try:
+        # Unpack the embeddings
+        transformer_embedding, word2vec_embedding = embedded_prompts
+        
         # Ensure vector indices exist if requested
         if ensure_indices:
             if not VectorComparison.create_vector_indices():
@@ -304,11 +334,12 @@ def retrieve_chunks(embedded_prompt, prompt, top_k=20,
             except Exception as e:
                 print(f"[4_RETRIEVE] DEBUG: Error checking database: {e}")
 
-        # Step 2: Run comprehensive evaluation on ALL chunks (includes vector similarity calculation)
+        # Step 2: Run comprehensive evaluation on ALL chunks
         evaluated_chunks = evaluate_chunks(
             prompt=prompt, 
             chunks=all_chunks,
-            embedded_prompt=embedded_prompt
+            transformer_embedding=transformer_embedding,
+            word2vec_embedding=word2vec_embedding
         )
 
         if not evaluated_chunks:
@@ -431,7 +462,7 @@ def retrieve_chunks_with_hop(prompt: str, top_k: int = 20, country: Optional[str
         print(f"[HOP_RETRIEVE] Traceback: {traceback_string}")
         return []
 
-@Logger.log(log_file=project_root / "logs/retrieve.log", log_level="DEBUG")
+@Logger.log(log_file=project_root / "logs/retrieve.log", log_level="INFO")
 def run_script(question_number: int = None, country: Optional[str] = None, 
               use_hop_retrieval: bool = False) -> List[Dict[str, Any]]:
     """
@@ -504,7 +535,6 @@ def run_script(question_number: int = None, country: Optional[str] = None,
             }
             
             # Only create hop data if hop retrieval is requested
-            hop_country_data = None
             if use_hop_retrieval:
                 hop_country_data = {
                     "metadata": {
@@ -524,12 +554,12 @@ def run_script(question_number: int = None, country: Optional[str] = None,
                 prompt = QUESTION_PROMPTS[q_num]
                 
                 # Always do standard vector-based retrieval for all questions
-                # Step 1: Embed the prompt
-                embedded_prompt = embed_prompt(prompt)
-                
-                # Step 2: Retrieve and evaluate chunks for this specific country and question
+                # Step 1: Embed the prompt using both models
+                transformer_embedding, word2vec_embedding = embed_prompt(prompt)
+
+                # Step 2: Retrieve and evaluate chunks
                 standard_chunks = retrieve_chunks(
-                    embedded_prompt=embedded_prompt,
+                    embedded_prompts=(transformer_embedding, word2vec_embedding),
                     prompt=prompt,
                     top_k=20,
                     ensure_indices=True,
@@ -630,6 +660,7 @@ if __name__ == "__main__":
     run_script(question_number=args.question, country=args.country, use_hop_retrieval=args.hop)
 
     # Usage examples:
+    # python 4_retrieve.py --hop                                  # (RECOMMENDED) Creates both vector and hop retrieval JSONs for all questions and countries
     # python 4_retrieve.py --question 1 --country "Japan"         # Creates only standard vector retrieval JSONs
     # python 4_retrieve.py --question 4                           # Creates standard JSONs for all countries
     # python 4_retrieve.py --question 1 --country "Japan" --hop   # Creates both vector and hop retrieval JSONs
