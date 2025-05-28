@@ -19,7 +19,7 @@ from database import Connection
 from helpers.internal import Logger, Test, TaskInfo
 from evaluator import Evaluator, VectorComparison, RegexComparison, FuzzyRegexComparison
 from embedding import TransformerEmbedding, CombinedEmbedding
-from query import Booster
+
 from constants.prompts import (
     QUESTION_PROMPT_1, QUESTION_PROMPT_2, QUESTION_PROMPT_3, QUESTION_PROMPT_4,
     QUESTION_PROMPT_5, QUESTION_PROMPT_6, QUESTION_PROMPT_7, QUESTION_PROMPT_8
@@ -111,12 +111,11 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
                 query_embedding=embedded_prompt,
                 embedding_type='transformer'
             )
-            
             # Add similarity scores to chunks
             chunks_with_similarity = []
             for chunk in chunks:
                 chunk_id = chunk['id']
-                similarity_score = similarities.get(chunk_id, 0.0)
+                similarity_score = similarities.get(str(chunk_id), 0.0)
                 
                 # Add similarity score to chunk
                 chunk['similarity_score'] = similarity_score
@@ -249,7 +248,7 @@ def retrieve_chunks(embedded_prompt, prompt, embedding_type='transformer', top_k
             chunks=all_chunks,
             embedded_prompt=embedded_prompt
         )
-        
+
         if not evaluated_chunks:
             return []
         
@@ -289,7 +288,7 @@ def retrieve_chunks(embedded_prompt, prompt, embedding_type='transformer', top_k
         return []
 
 
-@Logger.log(log_file=project_root / "logs/retrieve.log", log_level="DEBUG")
+@Logger.log(log_file=project_root / "logs/retrieve.log", log_level="INFO")
 def run_script(question_number: int = None, country: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Main function to run the retrieval script.
@@ -328,7 +327,7 @@ def run_script(question_number: int = None, country: Optional[str] = None) -> Li
             country=country,               # Filter by country (None = all countries)
             min_similarity=0.3             # Lower threshold to see more results
         )
-        
+
         if evaluated_chunks:
             # Create a metadata object to include with the evaluated chunks
             metadata = {

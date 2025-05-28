@@ -325,7 +325,7 @@ class VectorComparison(Evaluator):
             return 0.0
 
     @Logger.debug_log()
-    def batch_similarity_calculation(self, chunk_ids: List[int], query_embedding: List[float], 
+    def batch_similarity_calculation(self, chunk_ids: List, query_embedding: List[float], 
                                    embedding_type: str = 'transformer') -> Dict[int, float]:
         """
         Calculate similarity scores for multiple chunks efficiently in a single query.
@@ -360,7 +360,9 @@ class VectorComparison(Evaluator):
                 # Validate query_embedding dimensions
                 if not query_embedding or len(query_embedding) != vector_dim:
                     logger.error(f"[BATCH_SIMILARITY] Invalid query embedding dimensions. Expected {vector_dim}, got {len(query_embedding) if query_embedding else 0}")
-                    return {}                # Convert query embedding to PostgreSQL vector literal format
+                    return {}
+            
+                # Convert query embedding to PostgreSQL vector literal format
                 vector_literal = '[' + ','.join(map(str, query_embedding)) + ']'
                 
                 # Convert chunk_ids to tuple for SQL IN clause
@@ -368,10 +370,10 @@ class VectorComparison(Evaluator):
                   # Query to calculate similarity for all specified chunks
                 query = text(f"""
                     SELECT 
-                        c.id,
+                        c.id::text,
                         1 - (c.{embedding_column}::vector <=> '{vector_literal}'::vector({vector_dim})) AS similarity_score
                     FROM doc_chunks c
-                    WHERE c.id = ANY(:chunk_ids)
+                    WHERE c.id::text = ANY(:chunk_ids)
                       AND c.{embedding_column} IS NOT NULL
                 """)                
                 result = session.execute(query, {
