@@ -515,20 +515,56 @@ class HopRAGGraphProcessor:
                                    top_k: int = 20) -> List[Dict]:
         """Optimized BFS multi-hop retrieval"""
         
-        with self.db_connection.connect() as conn:
-            # Fixed BFS query with correct CTE syntax            
+        engine = self.db_connection.get_engine()
+        
+        # Convert the query to individual keywords for more flexible matching
+        query_terms = query.strip().split()
+        
+        # Only keep terms with 3+ characters to avoid common words
+        filtered_terms = [term for term in query_terms if len(term) >= 3]
+        
+        # Create a more flexible query by using OR between terms
+        flexible_query = ' | '.join(filtered_terms)
+        
+        logger.info(f"Original query: '{query[:50]}...'")
+        logger.info(f"Using flexible keyword search: '{flexible_query[:100]}...'")
+        
+        # First check if there are matching chunks for the flexible query
+        with engine.connect() as conn:
+            check_query = text("""
+                SELECT COUNT(*) 
+                FROM doc_chunks 
+                WHERE to_tsvector('english', content) @@ to_tsquery('english', :query)
+            """)
+            initial_match_count = conn.execute(check_query, {"query": flexible_query}).scalar() or 0
+            logger.info(f"Initial text match count for query: {initial_match_count}")
+            
+            if initial_match_count == 0:
+                logger.warning("No initial text matches found. BFS query will return no results.")
+                return []
+        
+        # Now check if we have any relationships to traverse
+        with engine.connect() as conn:
+            rel_query = text("SELECT COUNT(*) FROM logical_relationships WHERE confidence > 0.7")
+            rel_count = conn.execute(rel_query).scalar() or 0
+            logger.info(f"High-confidence relationships available for traversal: {rel_count}")
+        
+        with engine.connect() as conn:
+            logger.info(f"Executing BFS query with max_hops={max_hops}, top_k={top_k}")
+            
+            # Execute the BFS query with the modified flexible search
             result = conn.execute(text("""
                 WITH RECURSIVE hop_expansion AS (
-                    -- Initial query matching (no ORDER BY or LIMIT allowed here)
+                    -- Initial query matching with flexible term search
                     SELECT 
                         dc.id as chunk_id,
                         dc.content,
                         ARRAY[dc.id] as path,
                         0 as hops,
                         CAST(1.0 AS DOUBLE PRECISION) as confidence,
-                        CAST(ts_rank(to_tsvector('english', dc.content), plainto_tsquery('english', :query)) AS DOUBLE PRECISION) as initial_relevance
+                        CAST(ts_rank(to_tsvector('english', dc.content), to_tsquery('english', :query)) AS DOUBLE PRECISION) as initial_relevance
                     FROM doc_chunks dc
-                    WHERE to_tsvector('english', dc.content) @@ plainto_tsquery('english', :query)
+                    WHERE to_tsvector('english', dc.content) @@ to_tsquery('english', :query)
                     
                     UNION ALL
                     
@@ -584,7 +620,13 @@ class HopRAGGraphProcessor:
                 WHERE confidence > 0.3
                 ORDER BY confidence DESC, initial_relevance DESC, hops ASC
                 LIMIT :top_k;
-            """), {"query": query, "max_hops": max_hops, "top_k": top_k * 2}).fetchall()
+            """), {"query": flexible_query, "max_hops": max_hops, "top_k": top_k * 2}).fetchall()
+        
+        # Log the results
+        result_count = len(result)
+        logger.info(f"BFS query returned {result_count} results")
+        if result_count == 0:
+            logger.warning("BFS query returned no results. Check confidence thresholds and query matching.")
         
         return [dict(row._mapping) for row in result]
     

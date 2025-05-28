@@ -4,8 +4,22 @@ Pydantic schema models for the climate policy extractor.
 from datetime import datetime, date, timezone
 from typing import List, Dict, Any, Optional, Union, Tuple
 from uuid import UUID
+import json
 from pydantic import BaseModel, Field, validator
 
+class UUIDEncoder(json.JSONEncoder):
+    """Custom JSON encoder that can handle UUID objects"""
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            # Convert UUID objects to strings
+            return str(obj)
+        # Let the default encoder handle everything else
+        return super().default(obj)
+
+class Vector(BaseModel):
+    """Pydantic model for vector embeddings."""
+    values: List[float] = Field(..., description="Vector embedding values")
+    dimension: int = Field(..., description="Dimension of the vector")
 
 class DatabaseConfig(BaseModel):
     """Pydantic model for database configuration."""
