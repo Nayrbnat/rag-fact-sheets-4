@@ -2,7 +2,8 @@
 Optimized HopRAG Graph Processor with consistent UUID handling and improved efficiency
 Implements embeddings, relationship detection, and graph analysis
 """
-
+import sys
+from pathlib import Path
 import asyncio
 import numpy as np
 import json
@@ -11,7 +12,7 @@ import re
 import logging
 import networkx as nx
 import traceback
-from typing import List, Dict, Tuple, Optional, Set, Union
+from typing import List, Dict, Optional, Union
 from datetime import datetime
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
@@ -20,11 +21,18 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors
 from sqlalchemy import text
 import uuid
-from .database import Connection, NDCDocumentORM as Document, DocChunkORM, LogicalRelationshipORM
-from .schema import DatabaseConfig, LogicalRelationship
+from helpers.internal import Logger
+
+project_root = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(project_root))
+
+import group4py
+# from database import Connection, NDCDocumentORM, LogicalRelationshipORM
+from databases.auth import PostgresConnection
+from databases.models import LogicalRelationshipORM
+from databases.operations import upload
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Type alias for consistency
@@ -238,9 +246,8 @@ class OptimizedRelationshipDetector:
 class HopRAGGraphProcessor:
     """Optimized graph processor with consistent UUID handling"""
     
-    def __init__(self, db_config: DatabaseConfig, embedding_model: str = "all-MiniLM-L6-v2"):
-        self.db_config = db_config
-        self.db_connection = Connection(config=db_config)
+    def __init__(self, embedding_model: str = "all-MiniLM-L6-v2"):
+        self.db_connection = PostgresConnection()
         self.embedder = MemoryOptimizedEmbedder(embedding_model)
         self.relationship_detector = OptimizedRelationshipDetector()
         self.executor = ThreadPoolExecutor(max_workers=4)
@@ -272,10 +279,9 @@ class HopRAGGraphProcessor:
 
     async def process_embeddings_batch(self, batch_size: int = 500):
         """Generate embeddings with optimized UUID handling"""
-        engine = self.db_connection.get_engine()
-        
+
         # Get chunks without embeddings
-        with engine.connect() as conn:
+        with self.db_connection.connect() as conn:
             chunks_data = conn.execute(text("""
                 SELECT id, content 
                 FROM doc_chunks 
@@ -299,7 +305,7 @@ class HopRAGGraphProcessor:
             embeddings = self.embedder.encode_batch(texts)
             
             # Update database - direct UUID usage, no conversions
-            with engine.connect() as conn:
+            with self.db_connection.connect() as conn:
                 for j, row in enumerate(batch):
                     conn.execute(text(
                         "UPDATE doc_chunks SET hoprag_embedding = :embedding WHERE id = :chunk_id"
@@ -318,9 +324,8 @@ class HopRAGGraphProcessor:
     async def get_doc_chunk_count(self, doc_id: str) -> int:
         """Get the number of chunks for a specific document"""
         doc_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, doc_id)
-        engine = self.db_connection.get_engine()
-        
-        with engine.connect() as conn:
+
+        with self.db_connection.connect() as conn:
             result = conn.execute(text("""
                 SELECT COUNT(*) FROM doc_chunks 
                 WHERE doc_id = :doc_id
@@ -329,13 +334,11 @@ class HopRAGGraphProcessor:
         return result or 0
 
     async def build_relationships_sparse(self, max_neighbors: int = 50, min_confidence: float = 0.6, 
-                                       doc_id: str = None, force_commit: bool = False):
+                                       doc_id: str = None, force_commit: bool = False, session: Optional[None] = None):
         """Build relationships with optimized UUID handling and memory management"""
         
-        engine = self.db_connection.get_engine()
-        
         # Get chunks with embeddings - maintain UUID objects from start
-        with engine.connect() as conn:            
+        with self.db_connection.connect() as conn:            
             if doc_id:
                 logger.info(f"Building relationships for document: {doc_id}")
                 doc_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, doc_id)
@@ -452,7 +455,7 @@ class HopRAGGraphProcessor:
         
         # Insert relationships with optimized handling
         if all_relationships:
-            await self._insert_relationships_optimized(all_relationships)
+            await self._insert_relationships_optimized(all_relationships, session=session)
         else:
             logger.warning("No relationships detected to insert")
         
@@ -460,7 +463,7 @@ class HopRAGGraphProcessor:
         del embeddings, all_relationships, chunk_objects
         gc.collect()
 
-    async def _insert_relationships_optimized(self, relationships: List[RelationshipScore]):
+    async def _insert_relationships_optimized(self, relationships: List[RelationshipScore], session=Optional[None]):
         """Insert relationships with optimized UUID handling"""
         logger.info(f"Inserting {len(relationships)} relationships into database")
         
@@ -493,7 +496,7 @@ class HopRAGGraphProcessor:
             for i in range(0, len(relationship_orms), batch_size):
                 batch = relationship_orms[i:i+batch_size]
                 
-                success = self.db_connection.upload(batch, table='logical_relationships')
+                success = upload(session, batch, table='logical_relationships')
                 
                 if not success:
                     logger.error(f"Failed to upload relationship batch {i//batch_size + 1}")
@@ -510,35 +513,56 @@ class HopRAGGraphProcessor:
 
     async def bfs_multi_hop_retrieve(self, query: str, max_hops: int = 3, 
                                    top_k: int = 20) -> List[Dict]:
-        """Optimized BFS multi-hop retrieval"""
+        """Optimized BFS multi-hop retrieval with proper tsquery handling"""
         
         engine = self.db_connection.get_engine()
         
-        # Convert the query to individual keywords for more flexible matching
-        query_terms = query.strip().split()
+        # Clean and prepare the query for tsquery
+        def clean_for_tsquery(text: str) -> str:
+            """Clean text to be safe for PostgreSQL tsquery"""
+            # Remove special characters that break tsquery
+            cleaned = re.sub(r'[^\w\s]', ' ', text)
+            # Split into words and filter
+            words = [word for word in cleaned.split() if len(word) >= 3]
+            # Limit to reasonable number of terms
+            limited_words = words[:10]  # Limit to 10 words maximum
+            # Join with OR operator
+            return ' | '.join(limited_words) if limited_words else 'emissions'
         
-        # Only keep terms with 3+ characters to avoid common words
-        filtered_terms = [term for term in query_terms if len(term) >= 3]
-        
-        # Create a more flexible query by using OR between terms
-        flexible_query = ' | '.join(filtered_terms)
+        # Convert the query to a safe tsquery format
+        flexible_query = clean_for_tsquery(query)
         
         logger.info(f"Original query: '{query[:50]}...'")
-        logger.info(f"Using flexible keyword search: '{flexible_query[:100]}...'")
+        logger.info(f"Using cleaned tsquery: '{flexible_query}'")
         
         # First check if there are matching chunks for the flexible query
         with engine.connect() as conn:
-            check_query = text("""
-                SELECT COUNT(*) 
-                FROM doc_chunks 
-                WHERE to_tsvector('english', content) @@ to_tsquery('english', :query)
-            """)
-            initial_match_count = conn.execute(check_query, {"query": flexible_query}).scalar() or 0
-            logger.info(f"Initial text match count for query: {initial_match_count}")
-            
-            if initial_match_count == 0:
-                logger.warning("No initial text matches found. BFS query will return no results.")
-                return []
+            try:
+                check_query = text("""
+                    SELECT COUNT(*) 
+                    FROM doc_chunks 
+                    WHERE to_tsvector('english', content) @@ to_tsquery('english', :query)
+                """)
+                initial_match_count = conn.execute(check_query, {"query": flexible_query}).scalar() or 0
+                logger.info(f"Initial text match count for query: {initial_match_count}")
+                
+                if initial_match_count == 0:
+                    logger.warning(f"No initial text matches found for query: '{flexible_query}'")
+                    # Try with even simpler query
+                    simple_query = flexible_query.split(' | ')[0] if ' | ' in flexible_query else flexible_query
+                    logger.info(f"Trying simpler query: '{simple_query}'")
+                    simple_count = conn.execute(check_query, {"query": simple_query}).scalar() or 0
+                    if simple_count == 0:
+                        logger.warning("No matches found even with simple query. Returning empty results.")
+                        return []
+                    flexible_query = simple_query
+                
+            except Exception as e:
+                logger.error(f"Error in tsquery check: {e}")
+                # Fallback to single word search
+                first_word = query.split()[0] if query.split() else 'emissions'
+                flexible_query = first_word
+                logger.info(f"Falling back to single word: '{flexible_query}'")
         
         # Now check if we have any relationships to traverse
         with engine.connect() as conn:
@@ -549,75 +573,81 @@ class HopRAGGraphProcessor:
         with engine.connect() as conn:
             logger.info(f"Executing BFS query with max_hops={max_hops}, top_k={top_k}")
             
-            # Execute the BFS query with the modified flexible search
-            result = conn.execute(text("""
-                WITH RECURSIVE hop_expansion AS (
-                    -- Initial query matching with flexible term search
-                    SELECT 
-                        dc.id as chunk_id,
-                        dc.content,
-                        ARRAY[dc.id] as path,
-                        0 as hops,
-                        CAST(1.0 AS DOUBLE PRECISION) as confidence,
-                        CAST(ts_rank(to_tsvector('english', dc.content), to_tsquery('english', :query)) AS DOUBLE PRECISION) as initial_relevance
-                    FROM doc_chunks dc
-                    WHERE to_tsvector('english', dc.content) @@ to_tsquery('english', :query)
-                    
-                    UNION ALL
-                    
-                    -- Recursive expansion with optimizations
-                    SELECT 
-                        lr.target_chunk_id as chunk_id,
-                        dc.content,
-                        he.path || lr.target_chunk_id,
-                        he.hops + 1,
-                        he.confidence * lr.confidence * 0.9 as confidence,
-                        he.initial_relevance * 0.8
-                    FROM hop_expansion he
-                    JOIN logical_relationships lr ON he.chunk_id = lr.source_chunk_id
-                    JOIN doc_chunks dc ON lr.target_chunk_id = dc.id
-                    WHERE he.hops < :max_hops 
-                      AND lr.confidence > 0.7
-                      AND he.confidence > 0.4
-                      AND NOT (lr.target_chunk_id = ANY(he.path))
-                      AND array_length(he.path, 1) < 20
-                ),
-                -- Separate CTE to get top initial matches
-                top_initial AS (
-                    SELECT chunk_id, content, hops, confidence, initial_relevance
-                    FROM hop_expansion
-                    WHERE hops = 0
-                    ORDER BY initial_relevance DESC
-                    LIMIT 5
-                ),
-                -- Combine top initial matches with their expansions
-                filtered_expansion AS (
-                    SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
-                    FROM hop_expansion he
-                    WHERE he.hops = 0 
-                      AND he.chunk_id IN (SELECT chunk_id FROM top_initial)
-                    
-                    UNION ALL
-                    
-                    SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
-                    FROM hop_expansion he
-                    WHERE he.hops > 0
-                      AND EXISTS (
-                          SELECT 1 FROM top_initial ti 
-                          WHERE ti.chunk_id = ANY(he.path)
-                      )
-                )
-                SELECT DISTINCT 
-                    chunk_id, 
-                    content, 
-                    hops, 
-                    confidence,
-                    initial_relevance
-                FROM filtered_expansion
-                WHERE confidence > 0.3
-                ORDER BY confidence DESC, initial_relevance DESC, hops ASC
-                LIMIT :top_k;
-            """), {"query": flexible_query, "max_hops": max_hops, "top_k": top_k * 2}).fetchall()
+            try:
+                # Execute the BFS query with the cleaned flexible search
+                result = conn.execute(text("""
+                    WITH RECURSIVE hop_expansion AS (
+                        -- Initial query matching with flexible term search
+                        SELECT 
+                            dc.id as chunk_id,
+                            dc.content,
+                            ARRAY[dc.id] as path,
+                            0 as hops,
+                            CAST(1.0 AS DOUBLE PRECISION) as confidence,
+                            CAST(ts_rank(to_tsvector('english', dc.content), to_tsquery('english', :query)) AS DOUBLE PRECISION) as initial_relevance
+                        FROM doc_chunks dc
+                        WHERE to_tsvector('english', dc.content) @@ to_tsquery('english', :query)
+                        
+                        UNION ALL
+                        
+                        -- Recursive expansion with optimizations
+                        SELECT 
+                            lr.target_chunk_id as chunk_id,
+                            dc.content,
+                            he.path || lr.target_chunk_id,
+                            he.hops + 1,
+                            he.confidence * lr.confidence * 0.9 as confidence,
+                            he.initial_relevance * 0.8
+                        FROM hop_expansion he
+                        JOIN logical_relationships lr ON he.chunk_id = lr.source_chunk_id
+                        JOIN doc_chunks dc ON lr.target_chunk_id = dc.id
+                        WHERE he.hops < :max_hops 
+                          AND lr.confidence > 0.7
+                          AND he.confidence > 0.4
+                          AND NOT (lr.target_chunk_id = ANY(he.path))
+                          AND array_length(he.path, 1) < 20
+                    ),
+                    -- Separate CTE to get top initial matches
+                    top_initial AS (
+                        SELECT chunk_id, content, hops, confidence, initial_relevance
+                        FROM hop_expansion
+                        WHERE hops = 0
+                        ORDER BY initial_relevance DESC
+                        LIMIT 5
+                    ),
+                    -- Combine top initial matches with their expansions
+                    filtered_expansion AS (
+                        SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
+                        FROM hop_expansion he
+                        WHERE he.hops = 0 
+                          AND he.chunk_id IN (SELECT chunk_id FROM top_initial)
+                        
+                        UNION ALL
+                        
+                        SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
+                        FROM hop_expansion he
+                        WHERE he.hops > 0
+                          AND EXISTS (
+                              SELECT 1 FROM top_initial ti 
+                              WHERE ti.chunk_id = ANY(he.path)
+                          )
+                    )
+                    SELECT DISTINCT 
+                        chunk_id, 
+                        content, 
+                        hops, 
+                        confidence,
+                        initial_relevance
+                    FROM filtered_expansion
+                    WHERE confidence > 0.3
+                    ORDER BY confidence DESC, initial_relevance DESC, hops ASC
+                    LIMIT :top_k;
+                """), {"query": flexible_query, "max_hops": max_hops, "top_k": top_k * 2}).fetchall()
+                
+            except Exception as e:
+                logger.error(f"Error in BFS query execution: {e}")
+                logger.error(f"Query that failed: '{flexible_query}'")
+                return []
         
         # Log the results
         result_count = len(result)
@@ -632,11 +662,9 @@ class HopRAGGraphProcessor:
         
         if not chunk_ids:
             return []
-        
-        engine = self.db_connection.get_engine()
-        
+
         # Get subgraph data with correct table names
-        with engine.connect() as conn:
+        with self.db_connection.connect() as conn:
             # Get nodes - convert chunk_ids to list for PostgreSQL array compatibility
             nodes_data = conn.execute(text("""
                 SELECT id as chunk_id, content 
@@ -1090,13 +1118,12 @@ class HopRAGClassifier:
         for i, node in enumerate(results['overall_ranking'][:5]):
             print(f"{i+1}. Chunk {node['chunk_id']} ({node['classification']}) - Score: {node['combined_score']}")
 
-async def main():
+@Logger.log(log_file = project_root / "logs/hoprag.log", log_level="INFO")
+async def main(session):
     """Main processing function"""
     try:
         # Initialize
-        config = DatabaseConfig.from_env()
-        processor = HopRAGGraphProcessor(config)
-        await processor.initialize()
+        processor = HopRAGGraphProcessor()
         
         # Step 1: Generate embeddings
         logger.info("Step 1: Generating embeddings...")
@@ -1104,7 +1131,7 @@ async def main():
         
         # Step 2: Build relationships
         logger.info("Step 2: Building relationships...")
-        await processor.build_relationships_sparse(max_neighbors=30, min_confidence=0.6)
+        await processor.build_relationships_sparse(max_neighbors=30, min_confidence=0.6, session=session)
         
         # Step 3: Test query processing
         test_query = "Singapore NDC 2030 emission targets"
@@ -1137,4 +1164,6 @@ async def main():
         raise
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    db = PostgresConnection()
+    with db.get_session() as session:
+        asyncio.run(main(session))

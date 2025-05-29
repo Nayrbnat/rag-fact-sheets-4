@@ -16,20 +16,19 @@ load_dotenv()
 project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 import group4py
-from group4py.src.database import Connection
-from group4py.src.helpers import Logger, Test, TaskInfo
-from group4py.src.evaluator import Evaluator, VectorComparison, RegexComparison, FuzzyRegexComparison, GraphHopRetriever
-from group4py.src.embedding import TransformerEmbedding, CombinedEmbedding
-from group4py.src.query import Booster
-from group4py.src.constants.prompts import (
+from database import Connection
+from helpers.internal import Logger, Test, TaskInfo
+from evaluator import Evaluator, VectorComparison, RegexComparison, FuzzyRegexComparison, GraphHopRetriever, UUIDEncoder
+from embed.transformer import TransformerEmbedding
+from embed.word2vec import Word2VecEmbedding
+
+from constants.prompts import (
     QUESTION_PROMPT_1, QUESTION_PROMPT_2, QUESTION_PROMPT_3, QUESTION_PROMPT_4,
     QUESTION_PROMPT_5, QUESTION_PROMPT_6, QUESTION_PROMPT_7, QUESTION_PROMPT_8,
     HOP_KEYWORDS, GENERAL_NDC_KEYWORDS  # Add these imports
 )
-from group4py.src.database import Connection
-from group4py.src.schema import DatabaseConfig, UUIDEncoder
-
-
+from database import Connection
+from schema import DatabaseConfig
 
 # Dictionary mapping question numbers to their respective prompts
 QUESTION_PROMPTS = {
@@ -46,38 +45,40 @@ QUESTION_PROMPTS = {
 
 def embed_prompt(prompt):
     """
-    Embed a prompt using the embedding model.
+    Embed a prompt using both transformer and word2vec embedding models.
     
     Args:
         prompt: The text string to embed
         
     Returns:
-        list: Vector embedding of the prompt (list of floats)
+        tuple: (transformer_embedding, word2vec_embedding) - both as lists of floats
     """
     try:
-        # # First boost the prompt to enhance search performance
-        # booster = Booster()
-        # boosted_prompt = booster.boost_function(prompt)
-        # logger.debug(f"[4_RETRIEVE] Prompt boosted: {boosted_prompt[:50]}...")
-          # Initialize the embedding model, load models
-          
-        embedding_model = TransformerEmbedding()
-        embedding_model.load_models()
-
-        # Embed the prompt using transformer model
-        embedded_prompt = embedding_model.embed_transformer(prompt)
+        w2v_model_path = project_root / "local_models" / "word2vec"
+        # Initialize both embedding models
+        transformer_model = TransformerEmbedding()
+        transformer_model.load_models()
         
-        return embedded_prompt
+        word2vec_model = Word2VecEmbedding()
+        word2vec_model.load_global_model(str(w2v_model_path))
+
+        # Embed the prompt using both models
+        transformer_embedding = transformer_model.embed_transformer(prompt)
+        word2vec_embedding = word2vec_model.embed_text(prompt)
+        
+        return transformer_embedding, word2vec_embedding
     
     except Exception as e:
         traceback_string = traceback.format_exc()
         raise e
     
 
-def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: List[float] = None) -> List[Dict[str, Any]]:
+def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], 
+                   transformer_embedding: List[float] = None, 
+                   word2vec_embedding: List[float] = None) -> List[Dict[str, Any]]:
     """
-    Evaluate chunks using multiple comparison methods: vector similarity, regex patterns, and fuzzy matching.
-    Now handles chunks without embeddings gracefully.
+    Evaluate chunks using multiple comparison methods: transformer similarity, word2vec similarity, 
+    regex patterns, and fuzzy matching.
     """
     if not chunks:
         return []
@@ -89,10 +90,11 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
         
         chunks_with_similarity = []
         
-        if not db_connection.connect() or embedded_prompt is None:
+        if not db_connection.connect():
             # Fall back to chunks without similarity scores
             for chunk in chunks:
-                chunk['similarity_score'] = 0.0
+                chunk['transformer_similarity'] = 0.0
+                chunk['word2vec_similarity'] = 0.0
             chunks_with_similarity = chunks
         else:
             # Initialize VectorComparison with proper database connection
@@ -101,18 +103,38 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
             # Get chunk IDs for batch similarity calculation
             chunk_ids = [chunk['id'] for chunk in chunks]
             
-            # Calculate similarities in batch (now handles NULL embeddings)
-            similarities = vector_comp.batch_similarity_calculation(
-                chunk_ids=chunk_ids,
-                query_embedding=embedded_prompt,
-                embedding_type='transformer'
-            )
+            # Calculate transformer similarities
+            transformer_similarities = {}
+            if transformer_embedding is not None:
+                transformer_similarities = vector_comp.batch_similarity_calculation(
+                    chunk_ids=chunk_ids,
+                    query_embedding=transformer_embedding,
+                    embedding_type='transformer'
+                )
             
-            # Add similarity scores to chunks
+            # Calculate word2vec similarities
+            word2vec_similarities = {}
+            if word2vec_embedding is not None:
+                word2vec_similarities = vector_comp.batch_similarity_calculation(
+                    chunk_ids=chunk_ids,
+                    query_embedding=word2vec_embedding,
+                    embedding_type='word2vec'
+                )
+            
+            # Add both similarity scores to chunks
             for chunk in chunks:
                 chunk_id = chunk['id']
-                similarity_score = similarities.get(chunk_id, 0.0)
-                chunk['similarity_score'] = similarity_score
+                
+                # Get transformer similarity
+                transformer_score = transformer_similarities.get(chunk_id, 0.0)
+                transformer_score = transformer_similarities.get(str(chunk_id), transformer_score)
+                chunk['transformer_similarity'] = transformer_score
+                
+                # Get word2vec similarity
+                word2vec_score = word2vec_similarities.get(chunk_id, 0.0)
+                word2vec_score = word2vec_similarities.get(str(chunk_id), word2vec_score)
+                chunk['word2vec_similarity'] = word2vec_score
+                
                 chunks_with_similarity.append(chunk)
         
         # Initialize comparison engines
@@ -130,7 +152,7 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
             # Start with the chunk as-is
             evaluated_chunk = chunk.copy()
             
-            # 2. Apply regex evaluation (keyword-based)
+            # Apply regex evaluation (keyword-based)
             try:
                 regex_eval = regex_comparison.evaluate_chunk_score(chunk_content, prompt)
                 evaluated_chunk['regex_evaluation'] = regex_eval
@@ -138,7 +160,6 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
                 evaluated_chunk['keyword_matches'] = regex_eval['keyword_matches']
                 evaluated_chunk['query_types'] = regex_eval.get('query_types', [])
                 
-                # Get keyword highlights for debugging/explanation
                 highlights = regex_comparison.get_keyword_highlights(chunk_content, prompt)
                 if highlights:
                     evaluated_chunk['keyword_highlights'] = highlights
@@ -148,7 +169,7 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
                 evaluated_chunk['keyword_matches'] = 0
                 evaluated_chunk['regex_evaluation'] = {'error': str(e)}
             
-            # 3. Apply fuzzy regex evaluation (context-based)
+            # Apply fuzzy regex evaluation (context-based)
             try:
                 fuzzy_eval = fuzzy_regex_comparison.evaluate_chunk_relevance(chunk_content, prompt)
                 evaluated_chunk['fuzzy_evaluation'] = fuzzy_eval
@@ -159,19 +180,22 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
                 evaluated_chunk['fuzzy_score'] = 0.0
                 evaluated_chunk['fuzzy_evaluation'] = {'error': str(e)}
             
-            # 4. Calculate combined score using all available methods
-            similarity_score = evaluated_chunk.get('similarity_score', 0.0)
+            # Calculate combined score using all available methods
+            transformer_score = evaluated_chunk.get('transformer_similarity', 0.0)
+            word2vec_score = evaluated_chunk.get('word2vec_similarity', 0.0)
             regex_score = evaluated_chunk.get('regex_score', 0.0)
             fuzzy_score = evaluated_chunk.get('fuzzy_score', 0.0)
             
             # Configurable weights for different scoring methods
-            vector_weight = 0.40  # Vector similarity has highest weight
-            regex_weight = 0.35   # Direct keyword matches
-            fuzzy_weight = 0.25   # Fuzzy contextual matching
+            transformer_weight = 0.25  # Transformer similarity
+            word2vec_weight = 0.20     # Word2Vec similarity  
+            regex_weight = 0.30        # Direct keyword matches
+            fuzzy_weight = 0.25        # Fuzzy contextual matching
             
             # Combine scores
             combined_score = (
-                vector_weight * similarity_score +
+                transformer_weight * transformer_score +
+                word2vec_weight * word2vec_score +
                 regex_weight * regex_score +
                 fuzzy_weight * fuzzy_score
             )
@@ -180,12 +204,15 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
             
             # Add information about how the score was calculated
             evaluated_chunk['score_weights'] = {
-                'vector_weight': vector_weight,
+                'transformer_weight': transformer_weight,
+                'word2vec_weight': word2vec_weight,
                 'regex_weight': regex_weight,
                 'fuzzy_weight': fuzzy_weight
             }
             
-            # Add to our collection of evaluated chunks
+            # Keep legacy 'similarity_score' for backward compatibility
+            evaluated_chunk['similarity_score'] = (transformer_score + word2vec_score) / 2
+            
             evaluated_chunks.append(evaluated_chunk)
         
         # Sort by combined score (highest first)
@@ -197,18 +224,20 @@ def evaluate_chunks(prompt: str, chunks: List[Dict[str, Any]], embedded_prompt: 
         traceback_string = traceback.format_exc()
         # Return original chunks with 0.0 similarity scores if evaluation fails
         for chunk in chunks:
-            if 'similarity_score' not in chunk:
-                chunk['similarity_score'] = 0.0
+            if 'transformer_similarity' not in chunk:
+                chunk['transformer_similarity'] = 0.0
+            if 'word2vec_similarity' not in chunk:
+                chunk['word2vec_similarity'] = 0.0
         return chunks
 
-def retrieve_chunks(embedded_prompt, prompt, top_k=20, 
+def retrieve_chunks(embedded_prompts, prompt, top_k=20, 
                    ensure_indices=True, country=None, n_per_doc=None, min_similarity=0.0):
     """
     Retrieve and evaluate the most similar chunks from the database using comprehensive evaluation.
     First evaluates ALL chunks, then returns top ones based on weighted average score.
     
     Args:
-        embedded_prompt: The embedded query vector (list of floats)
+        embedded_prompts: Tuple of (transformer_embedding, word2vec_embedding)
         prompt: Original text prompt for evaluation
         embedding_type: Type of embedding to use ('transformer' or 'word2vec')
         top_k: Number of top similar chunks to retrieve
@@ -221,6 +250,9 @@ def retrieve_chunks(embedded_prompt, prompt, top_k=20,
         List of dictionaries containing evaluated chunks with comprehensive scores
     """
     try:
+        # Unpack the embeddings
+        transformer_embedding, word2vec_embedding = embedded_prompts
+        
         # Ensure vector indices exist if requested
         if ensure_indices:
             if not VectorComparison.create_vector_indices():
@@ -302,13 +334,14 @@ def retrieve_chunks(embedded_prompt, prompt, top_k=20,
             except Exception as e:
                 print(f"[4_RETRIEVE] DEBUG: Error checking database: {e}")
 
-        # Step 2: Run comprehensive evaluation on ALL chunks (includes vector similarity calculation)
+        # Step 2: Run comprehensive evaluation on ALL chunks
         evaluated_chunks = evaluate_chunks(
             prompt=prompt, 
             chunks=all_chunks,
-            embedded_prompt=embedded_prompt
+            transformer_embedding=transformer_embedding,
+            word2vec_embedding=word2vec_embedding
         )
-        
+
         if not evaluated_chunks:
             return []
         
@@ -352,84 +385,111 @@ def retrieve_chunks_with_hop(prompt: str, top_k: int = 20, country: Optional[str
                            question_number: Optional[int] = None) -> List[Dict[str, Any]]:
     """
     Retrieve chunks using graph-based multi-hop reasoning through relationship-based navigation.
-    
-    Args:
-        prompt: Query text to search for
-        top_k: Number of top chunks to retrieve (default: 20)
-        country: Optional country filter
-        question_number: Optional question number for keyword enhancement
-        
-    Returns:
-        List of dictionaries containing chunks with scores and metadata
     """
     try:
-        print(f"[HOP_RETRIEVE] Starting hop retrieval for query: '{prompt[:50]}...'")
+        print(f"[HOP_RETRIEVE] Starting hop retrieval for country: {country}, query: '{prompt[:50]}...'")
         
-        # Enhance query with relevant keywords from HOP_KEYWORDS
+        # Enhanced query should include country context
         enhanced_query = prompt
         
         if question_number is not None and question_number in HOP_KEYWORDS:
-            # Get keywords for this specific question number
             keywords = HOP_KEYWORDS[question_number]
-            # Take a subset of keywords to avoid overly long queries
             selected_keywords = " ".join(keywords[:8])
-            enhanced_query = f"{selected_keywords}"
-            print(f"[HOP_RETRIEVE] Enhanced query with keywords for question {question_number}")
-            print(f"[HOP_RETRIEVE] Using keywords: {selected_keywords}")
+            
+            # Include country in the enhanced query for better filtering
+            if country:
+                enhanced_query = f"{country} {selected_keywords} {prompt}"
+            else:
+                enhanced_query = f"{selected_keywords} {prompt}"
+                
+            print(f"[HOP_RETRIEVE] Enhanced query with country and keywords: {enhanced_query[:100]}...")
         else:
-            # Use general NDC keywords if no specific question number
             selected_keywords = " ".join(GENERAL_NDC_KEYWORDS[:5])
-            enhanced_query = f"{selected_keywords}"
-            print(f"[HOP_RETRIEVE] Using general keywords: {selected_keywords}")
+            if country:
+                enhanced_query = f"{country} {selected_keywords} {prompt}"
+            else:
+                enhanced_query = f"{selected_keywords} {prompt}"
+            print(f"[HOP_RETRIEVE] Using general keywords with country: {enhanced_query[:100]}...")
         
-        # Create database connection
         config = DatabaseConfig.from_env()
         db_connection = Connection(config)
         if not db_connection.connect():
             print("[HOP_RETRIEVE] Failed to connect to database")
             return []
         
-        # Check if logical_relationships table has data
-        engine = db_connection.get_engine()
-        with engine.connect() as conn:
-            # Check total relationship count
-            rel_count = conn.execute(text("SELECT COUNT(*) FROM logical_relationships")).scalar() or 0
-            print(f"[HOP_RETRIEVE] Found {rel_count} total relationships in database")
-            
-            # Check chunk count for the specified country
-            if country:
-                country_chunks = conn.execute(
-                    text("SELECT COUNT(*) FROM doc_chunks WHERE chunk_data->>'country' = :country"),
-                    {"country": country}
-                ).scalar() or 0
-                print(f"[HOP_RETRIEVE] Found {country_chunks} chunks for country '{country}'")
-        
         # Initialize the GraphHopRetriever
         hop_retriever = GraphHopRetriever(connection=db_connection)
         
-        # Retrieve chunks using graph-based hop reasoning with enhanced query
-        print(f"[HOP_RETRIEVE] Executing hop reasoning retrieval with enhanced query")
+        print(f"[HOP_RETRIEVE] Executing hop reasoning for country: {country}")
         results = hop_retriever.retrieve_with_hop_reasoning(
             query=enhanced_query,
-            top_k=top_k,
+            top_k=top_k * 2,  # Get more results to allow for filtering
             country=country
         )
         
-        if not results:
-            print("[HOP_RETRIEVE] No results returned from hop reasoning")
-        else:
-            print(f"[HOP_RETRIEVE] Retrieved {len(results)} chunks using hop reasoning")
+        # CRITICAL FIX: Filter results by country since hop retriever isn't doing it
+        if country and results:
+            print(f"[HOP_RETRIEVE] Pre-filter: {len(results)} chunks")
+            
+            # Get chunk metadata from database to properly filter
+            session = db_connection.get_session()
+            try:
+                chunk_ids = [str(result['id']) for result in results]
+                
+                # Query to get proper country information for these chunks
+                chunk_query = text("""
+                    SELECT c.id::text, c.chunk_data->>'country' as country, c.content, c.doc_id
+                    FROM doc_chunks c
+                    WHERE c.id::text = ANY(:chunk_ids)
+                      AND LOWER(c.chunk_data->>'country') = LOWER(:country)
+                """)
+                
+                valid_chunks = session.execute(chunk_query, {
+                    'chunk_ids': chunk_ids,
+                    'country': country
+                }).fetchall()
+                
+                print(f"[HOP_RETRIEVE] Found {len(valid_chunks)} chunks for country '{country}'")
+                
+                # Create lookup for valid chunks
+                valid_chunk_lookup = {row[0]: {'country': row[1], 'content': row[2], 'doc_id': row[3]} 
+                                    for row in valid_chunks}
+                
+                # Filter and update results
+                filtered_results = []
+                for result in results:
+                    chunk_id = str(result['id'])
+                    if chunk_id in valid_chunk_lookup:
+                        # Update result with proper metadata
+                        chunk_info = valid_chunk_lookup[chunk_id]
+                        result['chunk_data'] = {'country': chunk_info['country']}
+                        result['content'] = chunk_info['content']
+                        result['doc_id'] = chunk_info['doc_id']
+                        filtered_results.append(result)
+                
+                results = filtered_results[:top_k]  # Limit to requested top_k
+                print(f"[HOP_RETRIEVE] After country filtering: {len(results)} chunks for {country}")
+                
+            finally:
+                session.close()
         
-        # Don't save individual files - we'll save one consolidated file per country
+        # Debug the final results
+        if results:
+            countries_in_results = set()
+            for result in results:
+                result_country = result.get('chunk_data', {}).get('country', 'Unknown')
+                countries_in_results.add(result_country)
+            print(f"[HOP_RETRIEVE] Final results contain chunks from countries: {countries_in_results}")
+        
         return results
         
     except Exception as e:
         print(f"[HOP_RETRIEVE] Error in graph hop retrieval: {e}")
-        traceback_string = traceback.format_exc()
-        print(f"[HOP_RETRIEVE] Traceback: {traceback_string}")
+        import traceback
+        traceback.print_exc()
         return []
 
-@Logger.log(log_file=project_root / "logs/retrieve.log", log_level="DEBUG")
+@Logger.log(log_file=project_root / "logs/retrieve.log", log_level="INFO")
 def run_script(question_number: int = None, country: Optional[str] = None, 
               use_hop_retrieval: bool = False) -> List[Dict[str, Any]]:
     """
@@ -502,7 +562,6 @@ def run_script(question_number: int = None, country: Optional[str] = None,
             }
             
             # Only create hop data if hop retrieval is requested
-            hop_country_data = None
             if use_hop_retrieval:
                 hop_country_data = {
                     "metadata": {
@@ -522,12 +581,12 @@ def run_script(question_number: int = None, country: Optional[str] = None,
                 prompt = QUESTION_PROMPTS[q_num]
                 
                 # Always do standard vector-based retrieval for all questions
-                # Step 1: Embed the prompt
-                embedded_prompt = embed_prompt(prompt)
-                
-                # Step 2: Retrieve and evaluate chunks for this specific country and question
+                # Step 1: Embed the prompt using both models
+                transformer_embedding, word2vec_embedding = embed_prompt(prompt)
+
+                # Step 2: Retrieve and evaluate chunks
                 standard_chunks = retrieve_chunks(
-                    embedded_prompt=embedded_prompt,
+                    embedded_prompts=(transformer_embedding, word2vec_embedding),
                     prompt=prompt,
                     top_k=20,
                     ensure_indices=True,
@@ -616,6 +675,7 @@ def run_script(question_number: int = None, country: Optional[str] = None,
         traceback_string = traceback.format_exc()
         raise e
 
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Run the retrieval script with a specified question number.')
@@ -628,6 +688,7 @@ if __name__ == "__main__":
     run_script(question_number=args.question, country=args.country, use_hop_retrieval=args.hop)
 
     # Usage examples:
+    # python 4_retrieve.py --hop                                  # (RECOMMENDED) Creates both vector and hop retrieval JSONs for all questions and countries
     # python 4_retrieve.py --question 1 --country "Japan"         # Creates only standard vector retrieval JSONs
     # python 4_retrieve.py --question 4                           # Creates standard JSONs for all countries
     # python 4_retrieve.py --question 1 --country "Japan" --hop   # Creates both vector and hop retrieval JSONs

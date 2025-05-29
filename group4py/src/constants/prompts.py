@@ -1,42 +1,16 @@
-# ------------------------------------------------------------------------------------------------
-
-"""
-These are booster-level prompts - they are the minor guiding prompts, but ultimately feed into the pipeline prompts
-"""
-
-BOOSTER_PROMPT_1 = """
-Placeholder Booster Prompt 1
-Optional: {CHUNK_PROMPT_1}
-"""
-
-BOOSTER_PROMPT_2 = """
-Placeholder Booster Prompt 2
-"""
-
-BOOSTER_PROMPT_3 = """
-Placeholder Booster Prompt 3
-"""
-
-# ------------------------------------------------------------------------------------------------
-
-"""
-These are chunk-level prompts - they are the minor guiding prompts, but ultimately feed into the pipeline prompts to provide greater context
-"""
-
-CHUNK_PROMPT_1 = "Example: is this chunk about climate? Return only one word, 'yes' or 'no'"
-CHUNK_PROMPT_2 = "Example: is this chunk about politics? Return only one word, 'yes' or 'no'"
-CHUNK_PROMPT_3 = "Example: is this chunk about science? Return only one word, 'yes' or 'no'"
-
-# ------------------------------------------------------------------------------------------------
 
 """
 LLM Response Generation Prompts
 """
 
-LLM_SYSTEM_PROMPT = """You are an expert climate policy analyst. Always respond with valid JSON in the exact format requested."""
+
+LLM_SYSTEM_PROMPT = """
+You are an expert climate policy analyst. Always respond with valid JSON in the exact format requested.
+"""
 
 # Prompt for when JSON structure is enforced by the API (guided JSON)
-LLM_GUIDED_PROMPT_TEMPLATE = """You are an expert climate policy analyst. Your task is to answer questions about climate policies based on provided document chunks from NDC (Nationally Determined Contributions) documents.
+LLM_GUIDED_PROMPT_TEMPLATE = """
+You are an expert climate policy analyst. Your task is to answer questions about climate policies based on provided document chunks from NDC (Nationally Determined Contributions) documents.
 
 INSTRUCTIONS:
 1. Include the original question in your response
@@ -50,10 +24,12 @@ INSTRUCTIONS:
 
 QUESTION: {USER_QUESTION}
 
-Please provide a structured response that includes the original question, your answer, citations, and metadata."""
+Please provide a structured response that includes the original question, your answer, citations, and metadata.
+"""
 
 # Prompt for when JSON structure must be explicitly instructed (fallback)
-LLM_FALLBACK_PROMPT_TEMPLATE = """You are an expert climate policy analyst. Your task is to answer questions about climate policies based on provided document chunks from NDC (Nationally Determined Contributions) documents.
+LLM_FALLBACK_PROMPT_TEMPLATE = """
+You are an expert climate policy analyst. Your task is to answer questions about climate policies based on provided document chunks from NDC (Nationally Determined Contributions) documents.
 
 INSTRUCTIONS:
 1. Include the original question in your response
@@ -95,12 +71,24 @@ REQUIRED JSON RESPONSE FORMAT (respond with JSON only, no other text):
   }}
 }}
 
-RESPONSE (JSON only):"""
+RESPONSE (JSON only):
+"""
 
 # System prompt for fallback mode (more explicit about JSON requirements)
-LLM_FALLBACK_SYSTEM_PROMPT = """You are an expert climate policy analyst. You must ALWAYS respond with valid JSON in the exact format requested. Never include any text outside the JSON structure. Never use markdown formatting or code blocks."""
+LLM_FALLBACK_SYSTEM_PROMPT = """
+You are an expert climate policy analyst. You must ALWAYS respond with valid JSON in the exact format requested. Never include any text outside the JSON structure. Never use markdown formatting or code blocks.
+"""
+
+
 
 # ------------------------------------------------------------------------------------------------
+
+
+
+"""
+These are the prompts for the question-answering pipeline.
+"""
+
 
 QUESTION_PROMPT_1 = """What does the country promise as their emissions reduction target?
 

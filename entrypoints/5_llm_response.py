@@ -14,7 +14,7 @@ load_dotenv()
 project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 import group4py
-from group4py.src.helpers import Logger, Test, TaskInfo
+from helpers.internal import Logger, Test, TaskInfo
 from group4py.src.query import LLMClient, ResponseProcessor, ChunkFormatter, ConfidenceClassification
 
 logger = logging.getLogger(__name__)
@@ -257,24 +257,37 @@ def process_response(llm_response: Any, original_chunks: List[Dict[str, Any]], q
             "error_details": str(e)
         }
 
-def process_country_file(file_path: Path) -> Dict[str, Any]:
+def process_country_file(country_name: str, retrieve_dir: Path, retrieve_hop_dir: Path) -> Dict[str, Any]:
     """
-    Process a single country retrieve file and generate LLM responses.
+    Process a single country by merging data from both retrieve and retrieve_hop directories.
     
     Args:
-        file_path: Path to the country retrieve file
+        country_name: Name of the country to process
+        retrieve_dir: Path to the retrieve directory
+        retrieve_hop_dir: Path to the retrieve_hop directory
         
     Returns:
         Dictionary containing the processed responses
     """
     try:
-        # Extract country name from filename
-        country_name = file_path.stem.split('_')[0]
         logger.info(f"Processing country: {country_name}")
         
-        # Load the country retrieve data
-        with open(file_path, 'r', encoding='utf-8') as f:
-            retrieve_data = json.load(f)
+        # Load the country retrieve data to get question structure
+        retrieve_file = retrieve_dir / f"{country_name}.json"
+        retrieve_hop_file = retrieve_hop_dir / f"{country_name}.json"
+        
+        # Start with retrieve data as the base structure
+        retrieve_data = {}
+        if retrieve_file.exists():
+            with open(retrieve_file, 'r', encoding='utf-8') as f:
+                retrieve_data = json.load(f)
+        elif retrieve_hop_file.exists():
+            # If only retrieve_hop exists, use that as base
+            with open(retrieve_hop_file, 'r', encoding='utf-8') as f:
+                retrieve_data = json.load(f)
+        else:
+            logger.error(f"No data files found for country: {country_name}")
+            return {}
         
         # Initialize LLM client and confidence classifier
         llm_client = LLMClient()
@@ -282,28 +295,28 @@ def process_country_file(file_path: Path) -> Dict[str, Any]:
         
         # Process each question in the retrieve data
         results = {}
-        for question_id, question_data in retrieve_data.get('questions', {}).items():
+        for question_id in retrieve_data.get('questions', {}).keys():
             logger.info(f"Processing question ID {question_id}")
             
-            # Get the full query text
-            full_query_text = question_data.get('question')
+            # Merge chunks from both directories
+            merged_chunks, full_query_text = merge_chunks_from_directories(
+                country_name, question_id, retrieve_dir, retrieve_hop_dir
+            )
             
-            if not full_query_text:
-                logger.warning(f"Question ID {question_id} is missing the question text")
+            if not full_query_text or not merged_chunks:
+                logger.warning(f"Question ID {question_id} has no valid question text or chunks")
                 continue
             
             # Extract just the main question for JSON storage
             main_question = extract_main_question(full_query_text)
             logger.info(f"Main question extracted: {main_question}")
-            
-            # Extract top k chunks for the question
-            top_k_chunks = question_data.get('top_k_chunks', [])
+            logger.info(f"Using {len(merged_chunks)} merged chunks for question {question_id}")
             
             # Get LLM response using the FULL detailed query (not just main question)
-            llm_response = get_llm_response(llm_client, full_query_text, top_k_chunks)
+            llm_response = get_llm_response(llm_client, full_query_text, merged_chunks)
             
             # Process the LLM response, but store the main question in the JSON
-            processed_response = process_response(llm_response, top_k_chunks, full_query_text, main_question)
+            processed_response = process_response(llm_response, merged_chunks, full_query_text, main_question)
             
             # Store the processed response
             results[question_id] = processed_response
@@ -311,19 +324,102 @@ def process_country_file(file_path: Path) -> Dict[str, Any]:
         # After processing all questions, classify responses
         results = confidence_classifier.classify_response(results, retrieve_data)
         
-        return results
-        
+        return results        
     except Exception as e:
-        logger.error(f"Error processing {file_path}: {str(e)}")
+        logger.error(f"Error processing {country_name}: {str(e)}")
         logger.error(traceback.format_exc())
         return {
             "metadata": {
-                "country_name": file_path.stem.split('_')[0],
+                "country_name": country_name,
                 "timestamp": datetime.now().isoformat(),
                 "error": str(e)
             },
             "questions": {}
         }
+
+def merge_chunks_from_directories(country_name: str, question_id: str, retrieve_dir: Path, retrieve_hop_dir: Path) -> Tuple[List[Dict[str, Any]], str]:
+    """
+    Merge chunks from both retrieve and retrieve_hop directories for a given country and question.
+    
+    Args:
+        country_name: Name of the country
+        question_id: ID of the question (e.g., 'question_1')
+        retrieve_dir: Path to the retrieve directory
+        retrieve_hop_dir: Path to the retrieve_hop directory
+        
+    Returns:
+        Tuple of (merged_chunks_list, question_text)
+    """
+    try:
+        # File paths for both directories
+        retrieve_file = retrieve_dir / f"{country_name}.json"
+        retrieve_hop_file = retrieve_hop_dir / f"{country_name}.json"
+        
+        merged_chunks = []
+        question_text = None
+        chunk_ids_seen = set()  # To avoid duplicates
+        
+        # Load from retrieve directory
+        if retrieve_file.exists():
+            logger.info(f"Loading chunks from retrieve file: {retrieve_file}")
+            with open(retrieve_file, 'r', encoding='utf-8') as f:
+                retrieve_data = json.load(f)
+            
+            question_data = retrieve_data.get('questions', {}).get(question_id, {})
+            if question_data:
+                question_text = question_data.get('question')
+                chunks = question_data.get('top_k_chunks', [])
+                
+                for chunk in chunks:
+                    chunk_id = chunk.get('id')
+                    if chunk_id and chunk_id not in chunk_ids_seen:
+                        merged_chunks.append(chunk)
+                        chunk_ids_seen.add(chunk_id)
+                    elif not chunk_id:  # Handle chunks without IDs
+                        merged_chunks.append(chunk)
+                
+                logger.info(f"Added {len(chunks)} chunks from retrieve directory")
+        
+        # Load from retrieve_hop directory
+        if retrieve_hop_file.exists():
+            logger.info(f"Loading chunks from retrieve_hop file: {retrieve_hop_file}")
+            with open(retrieve_hop_file, 'r', encoding='utf-8') as f:
+                retrieve_hop_data = json.load(f)
+            
+            question_data = retrieve_hop_data.get('questions', {}).get(question_id, {})
+            if question_data:
+                # Use question text from retrieve_hop if not already set
+                if not question_text:
+                    question_text = question_data.get('question')
+                
+                chunks = question_data.get('top_k_chunks', [])
+                new_chunks_count = 0
+                
+                for chunk in chunks:
+                    chunk_id = chunk.get('id')
+                    if chunk_id and chunk_id not in chunk_ids_seen:
+                        merged_chunks.append(chunk)
+                        chunk_ids_seen.add(chunk_id)
+                        new_chunks_count += 1
+                    elif not chunk_id:  # Handle chunks without IDs
+                        merged_chunks.append(chunk)
+                        new_chunks_count += 1
+                
+                logger.info(f"Added {new_chunks_count} new chunks from retrieve_hop directory")
+        
+        if not question_text:
+            logger.warning(f"No question text found for {country_name} - {question_id}")
+            question_text = f"Question {question_id.split('_')[1] if '_' in question_id else question_id}"
+        
+        total_chunks = len(merged_chunks)
+        logger.info(f"Total merged chunks for {country_name} - {question_id}: {total_chunks}")
+        
+        return merged_chunks, question_text
+        
+    except Exception as e:
+        logger.error(f"Error merging chunks for {country_name} - {question_id}: {str(e)}")
+        logger.error(traceback.format_exc())
+        return [], f"Error loading question {question_id}"
 
 def main():
     """
@@ -346,48 +442,62 @@ def main():
         )
         
         logger.info("[5_LLM_RESPONSE] Starting LLM response pipeline...")
-        
-        # Set up directories
+          # Set up directories
         retrieve_dir = project_root / "data" / "retrieve"
+        retrieve_hop_dir = project_root / "data" / "retrieve_hop"
         llm_output_dir = project_root / "data" / "llm"
         
         # Create output directory if it doesn't exist
         llm_output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Find all JSON files in the retrieve directory
-        retrieve_files = list(retrieve_dir.glob("*.json"))
+        # Find all JSON files in both retrieve directories
+        retrieve_files = set()
+        if retrieve_dir.exists():
+            retrieve_files.update([f.stem for f in retrieve_dir.glob("*.json")])
+        if retrieve_hop_dir.exists():
+            retrieve_files.update([f.stem for f in retrieve_hop_dir.glob("*.json")])
         
         if not retrieve_files:
-            logger.error(f"No JSON files found in {retrieve_dir}")
+            logger.error(f"No JSON files found in {retrieve_dir} or {retrieve_hop_dir}")
             return
         
-        logger.info(f"Found {len(retrieve_files)} retrieve files to process")
+        logger.info(f"Found {len(retrieve_files)} unique countries to process")
         
-        # Process each retrieve file
-        for retrieve_file in retrieve_files:
+        # Process each country
+        for country_name in retrieve_files:
             try:
-                logger.info(f"Processing file: {retrieve_file.name}")
+                logger.info(f"Processing country: {country_name}")
                 
-                # Process the country file
-                llm_results = process_country_file(retrieve_file)
+                # Process the country with merged data from both directories
+                llm_results = process_country_file(country_name, retrieve_dir, retrieve_hop_dir)
                 
-                # Extract country name for output filename
-                country_name = retrieve_file.stem.split('_')[0]
+                # Create output filename with timestamp
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 output_filename = f"{country_name}_{timestamp}.json"
                 output_path = llm_output_dir / output_filename
                 
-                # Load original retrieve data to get query texts
-                with open(retrieve_file, 'r', encoding='utf-8') as f:
-                    retrieve_data = json.load(f)
+                # Load original retrieve data to get query texts (prefer retrieve over retrieve_hop)
+                retrieve_file = retrieve_dir / f"{country_name}.json"
+                retrieve_hop_file = retrieve_hop_dir / f"{country_name}.json"
                 
+                retrieve_data = {}
+                source_file_name = f"{country_name}.json"
+                
+                if retrieve_file.exists():
+                    with open(retrieve_file, 'r', encoding='utf-8') as f:
+                        retrieve_data = json.load(f)
+                    source_file_name = retrieve_file.name
+                elif retrieve_hop_file.exists():
+                    with open(retrieve_hop_file, 'r', encoding='utf-8') as f:
+                        retrieve_data = json.load(f)
+                    source_file_name = retrieve_hop_file.name                
                 # Create the final output structure
                 final_output = {
                     "metadata": {
                         "country_name": country_name,
                         "timestamp": datetime.now().isoformat(),
-                        "source_file": retrieve_file.name,
-                        "description": f"LLM-generated responses for {country_name} based on retrieved chunks",
+                        "source_file": source_file_name,
+                        "description": f"LLM-generated responses for {country_name} based on merged chunks from retrieve and retrieve_hop",
                         "question_count": 0
                     },
                     "questions": {}
@@ -405,12 +515,15 @@ def main():
                     retrieve_question_data = retrieve_data.get('questions', {}).get(question_id, {})
                     query_text = retrieve_question_data.get('question', 'Unknown')
                     
+                    # Count total chunks used (from both directories)
+                    total_chunks_used = len(question_result.get('citations', []))
+                    
                     # Build the question structure
                     final_output["questions"][question_id] = {
                         "question_number": int(question_id.split('_')[1]) if '_' in question_id else question_count,
                         "query_text": query_text,
                         "llm_response": question_result,
-                        "chunk_count": len(question_result.get('citations', []))
+                        "chunk_count": total_chunks_used
                     }
                 
                 # Update question count in metadata
@@ -423,7 +536,7 @@ def main():
                 logger.info(f"Saved LLM responses to: {output_path} ({question_count} questions processed)")
                 
             except Exception as e:
-                logger.error(f"Error processing {retrieve_file.name}: {e}")
+                logger.error(f"Error processing {country_name}: {e}")
                 logger.error(traceback.format_exc())
                 continue
         

@@ -38,11 +38,6 @@ class DatabaseConfig(BaseModel):
         import os
         return cls(
             url=os.getenv('DATABASE_URL', ''),
-            # host=os.getenv('DB_HOST', 'localhost'),
-            # port=int(os.getenv('DB_PORT', '5432')),
-            # database=os.getenv('DB_NAME', 'hoprag_db'),
-            # username=os.getenv('DB_USER', 'postgres'),
-            # password=os.getenv('DB_PASSWORD', '')
         )
 
 class NDCDocumentModel(BaseModel):
@@ -55,7 +50,7 @@ class NDCDocumentModel(BaseModel):
     submission_date: Optional[date] = None
     file_path: Optional[str] = None
     file_size: Optional[float] = None
-    scraped_at: datetime
+    scraped_at: Optional[datetime] = None
     downloaded_at: Optional[datetime] = None
     processed_at: Optional[datetime] = None
     last_download_attempt: Optional[datetime] = None

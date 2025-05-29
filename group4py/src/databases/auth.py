@@ -1,3 +1,4 @@
+
 """
 This module contains the authentication and connection logic for the database.
 """
@@ -22,8 +23,11 @@ SUPABASE_SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY')
 
 logger = logging.getLogger(__name__)
 
+
 class PostgresConnection:
     def __init__(self):
+        logger.info("Initializing PostgresConnection...")
+        
         if not DATABASE_URL:
             raise ValueError("DATABASE_URL environment variable is not set")
         self.engine = create_engine(DATABASE_URL)

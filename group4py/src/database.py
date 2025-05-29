@@ -12,7 +12,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.sql import func, text
 
-from .schema import DatabaseConfig
+from schema import DatabaseConfig
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -56,6 +56,7 @@ class DocChunkORM(Base):
     doc_id = Column(UUID(as_uuid=True), ForeignKey("documents.doc_id", ondelete="CASCADE"), nullable=False, index=True)
     content = Column(Text, nullable=False)
     chunk_index = Column(Integer, nullable=False)
+    page = Column(Integer)
     paragraph = Column(Integer)
     language = Column(String)
     
@@ -155,6 +156,7 @@ class Connection:
         Returns:
             Tuple of (is_processed, document) where is_processed is True if document exists
         """
+        self.connect()
         session = self.get_session()
         try:
             # Convert string doc_id to UUID using deterministic UUID5 - SAME AS PROCESSING CODE
