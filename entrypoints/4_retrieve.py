@@ -17,7 +17,7 @@ project_root = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(project_root))
 
 # Import project modules after path setup
-from database import Connection
+from group4py.src.database import Connection
 from helpers.internal import Logger
 from evaluator import (
     VectorComparison,
