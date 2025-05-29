@@ -13,6 +13,7 @@ python setup_database.py  # Executes all SQL files in order
 
 - [What This Database Does](#what-this-database-does)
 - [Database Structure](#database-structure)
+- [Database Diagram](#database-diagram)
 - [The 7 Tables](#the-7-tables)
   - [1. countries](#1-countries)
   - [2. questions](#2-questions)
@@ -48,24 +49,112 @@ citations (links answers to source chunks)
 
 **Why this structure?** Each level represents a stage in our pipeline. Cascade deletes ensure if you remove a country, all its documents, chunks, relationships, and answers disappear too—no orphaned data.
 
+## Database Diagram
+
+```mermaid
+erDiagram
+    countries ||--o{ documents : "has many"
+    documents ||--o{ doc_chunks : "contains"
+    doc_chunks ||--o{ logical_relationships : "source"
+    doc_chunks ||--o{ logical_relationships : "target"
+    countries ||--o{ questions_answers : "has answers"
+    questions ||--o{ questions_answers : "has responses"
+    doc_chunks ||--o{ citations : "cited in"
+    questions_answers ||--o{ citations : "contains"
+    
+    countries {
+        VARCHAR id PK "Country name"
+    }
+    
+    questions {
+        INTEGER id PK
+        TEXT question "Question text"
+    }
+    
+    documents {
+        UUID doc_id PK
+        TEXT country FK "CASCADE"
+        TIMESTAMPTZ scraped_at
+        TIMESTAMPTZ downloaded_at
+        TIMESTAMPTZ processed_at
+        TEXT title
+        TEXT url
+        TEXT language
+        DATE submission_date
+        TEXT file_path
+        DOUBLE_PRECISION file_size
+        TEXT extracted_text
+        JSONB chunks
+    }
+    
+    doc_chunks {
+        UUID id PK
+        UUID doc_id FK "CASCADE"
+        TEXT content
+        INTEGER chunk_index
+        INTEGER paragraph
+        INTEGER page
+        TEXT language
+        VARCHAR content_hash
+        DOUBLE_PRECISION[] transformer_embedding
+        DOUBLE_PRECISION[] word2vec_embedding
+        DOUBLE_PRECISION[] hoprag_embedding
+        JSONB chunk_data
+    }
+    
+    logical_relationships {
+        UUID id PK
+        UUID source_chunk_id FK "CASCADE"
+        UUID target_chunk_id FK "CASCADE"
+        VARCHAR relationship_type
+        DOUBLE_PRECISION confidence
+        TEXT evidence
+        VARCHAR method
+    }
+    
+    questions_answers {
+        UUID id PK
+        TEXT country FK "CASCADE"
+        INTEGER question FK "CASCADE"
+        TIMESTAMPTZ timestamp
+        TEXT summary
+        TEXT detailed_response
+        UUID[] citations
+    }
+    
+    citations {
+        UUID id PK
+        UUID cited_chunk_id FK "CASCADE"
+        UUID cited_in_answer_id FK "CASCADE"
+    }
+```
+
 ---
 
 ## The 7 Tables
 
 ### 1. countries
+
+Primary reference table containing country identifiers.
+
 ```sql
 CREATE TABLE countries (
     id VARCHAR(255) PRIMARY KEY
 );
 ```
 
-**Purpose:** Master list of 150+ countries with NDC documents.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | VARCHAR(255) | Primary key, country name |
 
 **Design choice:** Country name as primary key because it's human-readable and referenced throughout the system. No separate integer IDs because country names are stable identifiers.
 
 **Sample data:** `'Rwanda'`, `'United Kingdom of Great Britain and Northern Ireland'`, `'Côte d''Ivoire'`
 
-### 2. questions  
+### 2. questions
+
+Pre-defined questions for document analysis.
+
 ```sql
 CREATE TABLE questions (
     id INTEGER PRIMARY KEY,
@@ -73,7 +162,10 @@ CREATE TABLE questions (
 );
 ```
 
-**Purpose:** The 10 specific questions we ask about every country's climate commitments.
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | Primary key |
+| question | TEXT | The question text |
 
 **Sample questions:**
 - "What does the country promise as their 2030/2035 NDC target?"
@@ -83,6 +175,9 @@ CREATE TABLE questions (
 **Why fixed questions?** This isn't a general Q&A system—it's focused on extracting specific policy information consistently across all countries.
 
 ### 3. documents
+
+Stores document metadata with link to countries.
+
 ```sql
 CREATE TABLE documents (
     doc_id UUID PRIMARY KEY,
@@ -113,6 +208,27 @@ CREATE TABLE documents (
 );
 ```
 
+| Column | Type | Description |
+|--------|------|-------------|
+| doc_id | UUID | Primary key |
+| scraped_at | TIMESTAMPTZ | When document was scraped |
+| downloaded_at | TIMESTAMPTZ | When document was downloaded |
+| processed_at | TIMESTAMPTZ | When document was processed |
+| last_download_attempt | TIMESTAMPTZ | Last time download was attempted |
+| download_error | TEXT | Error message if download failed |
+| download_attempts | INTEGER | Number of download attempts |
+| country | TEXT | Foreign key to countries(id) with CASCADE delete |
+| title | TEXT | Document title |
+| url | TEXT | Source URL |
+| language | TEXT | Document language |
+| submission_date | DATE | When document was submitted |
+| file_path | TEXT | Path to stored file |
+| file_size | DOUBLE PRECISION | File size in bytes |
+| extracted_text | TEXT | Plain text extracted from document |
+| chunks | JSONB | JSON representation of chunks |
+| created_at | TIMESTAMPTZ | Record creation timestamp |
+| updated_at | TIMESTAMPTZ | Record update timestamp |
+
 **Key design decisions:**
 
 **Why so many timestamp fields?** NDC documents change over time. We track each processing stage to debug issues and avoid reprocessing successfully handled documents.
@@ -122,6 +238,9 @@ CREATE TABLE documents (
 **Why `download_attempts` and `download_error`?** Government websites are unreliable. We track failures and retry limits to avoid infinite retry loops.
 
 ### 4. doc_chunks
+
+Stores segments of documents for efficient retrieval.
+
 ```sql
 CREATE TABLE doc_chunks (
     id UUID PRIMARY KEY,
@@ -146,6 +265,23 @@ CREATE TABLE doc_chunks (
 );
 ```
 
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| doc_id | UUID | Foreign key to documents(doc_id) with CASCADE delete |
+| content | TEXT | Chunk text content |
+| chunk_index | INTEGER | Position within document |
+| paragraph | INTEGER | Paragraph number |
+| page | INTEGER | Page number in document |
+| language | TEXT | Chunk language |
+| transformer_embedding | DOUBLE PRECISION[] | Vector embedding from transformer model |
+| word2vec_embedding | DOUBLE PRECISION[] | Word2Vec embedding |
+| hoprag_embedding | DOUBLE PRECISION[] | HopRAG embedding |
+| chunk_data | JSONB | Additional chunk metadata |
+| created_at | TIMESTAMPTZ | Record creation timestamp |
+| updated_at | TIMESTAMPTZ | Record update timestamp |
+| content_hash | VARCHAR(64) | Hash of content for deduplication |
+
 **Why three different embeddings?** Each serves a different purpose:
 - **Transformer**: Best for semantic similarity
 - **Word2Vec**: Captures domain-specific climate terminology
@@ -159,6 +295,9 @@ CREATE TABLE doc_chunks (
 - `page`: Where users can find this text in the PDF
 
 ### 5. logical_relationships
+
+Defines semantic relationships between document chunks.
+
 ```sql
 CREATE TABLE logical_relationships (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -184,6 +323,17 @@ CREATE TABLE logical_relationships (
 );
 ```
 
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key (auto-generated) |
+| source_chunk_id | UUID | Foreign key to doc_chunks(id) with CASCADE delete |
+| target_chunk_id | UUID | Foreign key to doc_chunks(id) with CASCADE delete |
+| relationship_type | VARCHAR(50) | Type of relationship (SUPPORTS, EXPLAINS, etc.) |
+| confidence | DOUBLE PRECISION | Confidence score (0.0-1.0) |
+| evidence | TEXT | Supporting evidence for relationship |
+| method | VARCHAR(50) | Method used to establish relationship |
+| created_at | TIMESTAMPTZ | Record creation timestamp |
+
 **Purpose:** Maps logical connections between document sections (e.g., "Section A supports claim in Section B").
 
 **The 6 relationship types:**
@@ -199,6 +349,9 @@ CREATE TABLE logical_relationships (
 **Why `confidence` scores?** Relationship detection isn't perfect. Confidence scores let us filter out weak connections and focus on high-confidence relationships.
 
 ### 6. questions_answers
+
+Stores answers to questions about specific countries.
+
 ```sql
 CREATE TABLE questions_answers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -212,6 +365,16 @@ CREATE TABLE questions_answers (
 );
 ```
 
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key (auto-generated) |
+| country | TEXT | Foreign key to countries(id) with CASCADE delete |
+| timestamp | TIMESTAMPTZ | When answer was generated |
+| question | INTEGER | Foreign key to questions(id) with CASCADE delete |
+| summary | TEXT | Brief answer summary |
+| detailed_response | TEXT | Full detailed response |
+| citations | UUID[] | Array of citation IDs |
+
 **Purpose:** Stores generated answers for each country-question combination.
 
 **Why separate `summary` and `detailed_response`?** Different use cases need different detail levels. Summaries for quick reference, detailed responses for thorough analysis.
@@ -219,6 +382,9 @@ CREATE TABLE questions_answers (
 **Why `citations` as an array?** Answers often reference multiple document chunks. Arrays are simpler than junction tables for this use case.
 
 ### 7. citations
+
+Links document chunks to specific answers.
+
 ```sql
 CREATE TABLE citations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -226,6 +392,12 @@ CREATE TABLE citations (
     cited_in_answer_id UUID NOT NULL REFERENCES questions_answers(id) ON DELETE CASCADE
 );
 ```
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key (auto-generated) |
+| cited_chunk_id | UUID | Foreign key to doc_chunks(id) with CASCADE delete |
+| cited_in_answer_id | UUID | Foreign key to questions_answers(id) with CASCADE delete |
 
 **Purpose:** Links specific document chunks to the answers that reference them.
 
@@ -249,6 +421,18 @@ CREATE TABLE citations (
 **Why this design?** Climate data is interconnected. Half-orphaned records would create confusing inconsistencies. Better to have clean deletions than corrupted data.
 
 **Example:** Delete Rwanda → All Rwanda documents, chunks, relationships, and answers disappear. Clean slate.
+
+**Deletion Behavior:**
+
+All tables implement `ON DELETE CASCADE` for their foreign key relationships:
+
+- When a country is deleted, all associated documents, chunks, answers and citations are removed
+- When a document is deleted, all its chunks and related data are removed
+- When a chunk is deleted, all relationships and citations referencing it are removed
+- When a question is deleted, all answers to that question are removed
+- When an answer is deleted, all citations in that answer are removed
+
+This ensures database integrity and prevents orphaned records.
 
 ## Performance Considerations
 
