@@ -222,6 +222,19 @@ def main():
     # Get target path from command line argument or use current directory
     target_path = sys.argv[1] if len(sys.argv) > 1 else "."
     
+    # Handle relative paths to parent directory
+    if target_path.startswith("..") or target_path == "..":
+        # Converting to absolute path relative to script's parent directory
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(script_dir)
+        
+        if target_path == "..":
+            target_path = parent_dir
+        else:
+            # For paths like "../something"
+            rel_path = target_path[3:] if target_path.startswith("../") else target_path[2:]
+            target_path = os.path.join(parent_dir, rel_path)
+    
     # Validate the path
     if not os.path.exists(target_path):
         print(f"Error: Path '{target_path}' does not exist.")
