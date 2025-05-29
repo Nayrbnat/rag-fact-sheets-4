@@ -17,13 +17,13 @@
 
 ## Overview
 
-The scrape module automatically discovers, downloads, and tracks changes to climate policy documents from the UNFCCC website. Think of it as a focused web crawler that knows exactly what it's looking for.
+The scrape module automatically discovers, downloads, and tracks changes to climate policy documents from the UNFCCC website. This focused web crawler maintains an up-to-date database of NDC documents with automatic change detection and file caching.
 
 **Core Purpose:** Maintain an up-to-date database of NDC documents with automatic change detection and file caching.
 
 **Entry Point:**
 ```bash
-python 1_scrape.py  # That's it
+python 1_scrape.py
 ```
 
 ### Key Features
@@ -37,11 +37,11 @@ python 1_scrape.py  # That's it
 
 ### Design Principles
 
-**Why Selenium over requests?** The UNFCCC site uses dynamic JavaScript tables. Simple HTTP requests miss the actual content.
+**Selenium over requests:** The UNFCCC site uses dynamic JavaScript tables that simple HTTP requests cannot access.
 
-**Why download immediately?** Documents sometimes disappear from government websites. We cache them when we find them.
+**Immediate downloads:** Documents sometimes disappear from government websites, so we cache them when discovered.
 
-**Why only PDF/DOC/DOCX?** These are the only formats we can reliably process downstream. Other formats get logged but skipped.
+**PDF/DOC/DOCX only:** These are the only formats reliably processable downstream. Other formats are logged but skipped.
 
 ---
 
@@ -63,30 +63,42 @@ group4py/src/scrape/
 
 ### Data Flow
 
-```text
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Entry Point   │ -> │    Workflow     │ -> │   Database      │
-│   1_scrape.py   │    │ Orchestrator    │    │   Operations    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                              │                        ^
-                              v                        │
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  File Download  │ <- │  Document       │ <- │   Selenium      │
-│   download.py   │    │ Comparator      │    │  Scraper        │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                                             │
-         v                                             v
-┌─────────────────┐                        ┌─────────────────┐
-│  File System    │                        │ UNFCCC Website  │
-│  data/pdfs/     │                        │   (Dynamic JS)  │
-└─────────────────┘                        └─────────────────┘
+```mermaid
+graph TD
+    A[Entry Point 1_scrape.py] --> B[Workflow Orchestrator]
+    B --> C[Selenium Scraper]
+    C --> D[UNFCCC Website Dynamic JS]
+    B --> E[Document Comparator]
+    E --> F[Database Operations]
+    B --> G[File Download]
+    G --> H[File System data/pdfs/]
+    F --> I[PostgreSQL Database]
+    
+    C --> J[Extract Document Metadata]
+    J --> E
+    E --> K[Detect Changes]
+    K --> G
+    K --> F
 ```
 
-**The flow:** `workflow.py` coordinates everything. `selenium.py` extracts document metadata. `comparator.py` detects changes. `db_operations.py` updates the database. `download.py` fetches the actual files.
+**Process Flow:** `workflow.py` coordinates all operations. `selenium.py` extracts document metadata from the dynamic UNFCCC website. `comparator.py` detects changes between existing and newly scraped documents. `db_operations.py` manages database updates. `download.py` fetches and validates document files.
 
 ---
 
 ## Core Functions
+
+### Function Overview
+
+| Function Name | File | Responsibility |
+|---------------|------|----------------|
+| `main()` | 1_scrape.py | Entry point orchestrator |
+| `run_scraping_workflow()` | workflow.py | 7-step workflow coordination |
+| `scrape_ndc_documents()` | selenium.py | Extract metadata from UNFCCC |
+| `compare_documents()` | comparator.py | Detect document changes |
+| `retrieve_existing_documents()` | db_operations.py | Load existing database records |
+| `insert_new_documents()` | db_operations.py | Add new documents to database |
+| `update_existing_documents()` | db_operations.py | Update changed documents |
+| `download_pdf()` | download.py | Download and validate document files |
 
 ### Entry Point Function
 
@@ -106,7 +118,7 @@ def main():
         raise
 ```
 
-**Why this design?** All the real work happens in the `scrape` module. This keeps the entry point clean and testable while delegating complex logic to specialized modules.
+**Design Rationale:** All complex logic remains in the `scrape` module, keeping the entry point clean and testable while delegating specialized operations to dedicated modules.
 
 ### Workflow Orchestration
 
@@ -185,11 +197,23 @@ Updates existing documents with changed metadata.
 ```
 Examples: `Rwanda_en_20220601.pdf`, `France_fr_20231215.pdf`
 
-**Why this format?** Predictable filenames make downstream processing easier. Date helps track document versions.
+**Rationale:** Predictable filenames facilitate downstream processing. Date tracking enables document version management.
 
 ---
 
 ## Processing Workflow
+
+```mermaid
+graph LR
+    A[Scraper Triggered] --> B[Load Existing Documents]
+    B --> C[Scrape UNFCCC Website]
+    C --> D[Compare Documents]
+    D --> E[Insert New Documents]
+    E --> F[Download PDF Files]
+    F --> G[Update Changed Documents]
+    G --> H[Log Removed Documents]
+    H --> I[Return Workflow Results]
+```
 
 ### Step-by-Step Execution
 
@@ -219,7 +243,7 @@ def run_scraping_workflow(config: Optional[ScrapingConfig] = None) -> Dict[str, 
 
 ### Content Validation Strategy
 
-**Why so paranoid?** Government websites are notorious for broken links and misconfigured servers. Multiple validation layers prevent garbage data.
+Government websites frequently have broken links and misconfigured servers. Multiple validation layers prevent corrupted data entry.
 
 **Multi-Level Validation:**
 - URL structure validation
@@ -264,26 +288,46 @@ ScrapeError (base)
 
 ### Error Handling Philosophy
 
-**Conservative approach:** Data safety prioritized over automation. We'd rather fail explicitly than corrupt the database with bad data.
+**Conservative approach:** Data safety takes priority over automation. The system fails explicitly rather than risk database corruption with invalid data.
 
 ---
 
 ## Database Integration
 
-### Document Storage Schema
+### Storage Schema
 
-```sql
-CREATE TABLE documents (
-    doc_id UUID PRIMARY KEY,
-    country VARCHAR NOT NULL,
-    title VARCHAR,
-    url VARCHAR UNIQUE,
-    language VARCHAR,
-    submission_date TIMESTAMP,
-    file_path VARCHAR,
-    processed_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+```mermaid
+erDiagram
+    documents ||--o{ doc_chunks : "leads to processing"
+    
+    documents {
+        UUID doc_id PK
+        VARCHAR country
+        VARCHAR title
+        VARCHAR url
+        VARCHAR language
+        TIMESTAMP submission_date
+        VARCHAR file_path
+        FLOAT file_size
+        TIMESTAMP processed_at
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    
+    doc_chunks {
+        UUID id PK
+        UUID doc_id FK
+        TEXT content
+        INTEGER chunk_index
+        INTEGER page
+        INTEGER paragraph
+        VARCHAR language
+        FLOAT[] transformer_embedding
+        FLOAT[] word2vec_embedding
+        JSONB chunk_data
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
 ```
 
 ### UUID Strategy
@@ -294,7 +338,7 @@ doc_uuid = uuid.uuid5(uuid.NAMESPACE_URL, url)
 # Same document URL always gets same UUID across runs
 ```
 
-**Why deterministic UUIDs?** Ensures consistent document identification across multiple scraping runs, preventing duplicates and enabling reliable change tracking.
+**Rationale:** Deterministic UUIDs ensure consistent document identification across multiple scraping runs, preventing duplicates and enabling reliable change tracking.
 
 ---
 
@@ -400,7 +444,7 @@ class ScrapingConfig:
 
 ### Configuration Rationale
 
-**Why these values?** 
+**Parameter Selection:** 
 - 30 seconds handles slow government websites
 - 3 retries catch transient network issues without excessive delays  
 - Conservative defaults prioritize data safety over automation
@@ -438,25 +482,25 @@ class ScrapingConfig:
 
 ### Monitoring & Logging
 
-Check these log patterns for health monitoring:
+Health monitoring log patterns:
 - `Found X existing documents` (startup validation)
 - `Scraped X documents from website` (scraping success)  
 - `Successfully downloaded X/Y new documents` (download summary)
 - `NDC document scraping workflow completed successfully!` (everything worked)
 
-Missing any of these suggests a problem at that stage.
+Missing any of these patterns suggests a problem at that stage.
 
 ### Extension Points
 
-**Want to add new document sources?** Implement the same interface as `selenium.py`:
+**Adding new document sources:** Implement the same interface as `selenium.py`:
 ```python
 def scrape_documents(headless: bool, timeout: int) -> List[NDCDocumentModel]:
     # Your scraping logic here
     pass
 ```
 
-**Want different download logic?** Replace `download.py` while keeping the same function signature.
+**Custom download logic:** Replace `download.py` while maintaining the same function signature.
 
-**Want custom change detection?** Modify `comparator.py` - it's pure business logic with no side effects.
+**Custom change detection:** Modify `comparator.py` - it contains pure business logic with no side effects.
 
-The modular design makes swapping components straightforward. 
+The modular design facilitates component replacement and extension. 
