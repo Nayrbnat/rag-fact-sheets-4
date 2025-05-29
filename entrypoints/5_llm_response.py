@@ -1,23 +1,36 @@
+#!/usr/bin/env python3
+"""
+Script for generating LLM responses using retrieved chunks.
+"""
+
 import sys
 from pathlib import Path
 import logging
 import traceback
-from typing import List, Dict, Any, Optional, Union, Tuple  
+from typing import List, Dict, Any, Tuple
 import argparse
 import json
 from dotenv import load_dotenv
 from datetime import datetime
 
+# Set up project root and path
+project_root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(project_root))
+
+# Import project modules after path setup
+from group4py.src.query import (
+    LLMClient,
+    ResponseProcessor,
+    ChunkFormatter,
+    ConfidenceClassification
+)
+
 # Load environment variables from .env file
 load_dotenv()
 
-project_root = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(project_root))
-import group4py
-from helpers.internal import Logger, Test, TaskInfo
-from group4py.src.query import LLMClient, ResponseProcessor, ChunkFormatter, ConfidenceClassification
-
+# Initialize logger
 logger = logging.getLogger(__name__)
+
 
 def setup_llm(supports_guided_json: bool = True) -> LLMClient:
     """
@@ -30,7 +43,10 @@ def setup_llm(supports_guided_json: bool = True) -> LLMClient:
         Initialized LLMClient instance
     """
     try:
-        logger.info(f"[5_LLM_RESPONSE] Setting up LLM client (guided_json: {supports_guided_json})...")
+        logger.info(
+            f"[5_LLM_RESPONSE] Setting up LLM client "
+            f"(guided_json: {supports_guided_json})..."
+        )
         
         llm_client = LLMClient(supports_guided_json=supports_guided_json)
         
@@ -42,8 +58,12 @@ def setup_llm(supports_guided_json: bool = True) -> LLMClient:
         
     except Exception as e:
         traceback_string = traceback.format_exc()
-        logger.error(f"[5_LLM_RESPONSE] Error in setup_llm: {e}\nTraceback: {traceback_string}")
+        logger.error(
+            f"[5_LLM_RESPONSE] Error in setup_llm: {e}\n"
+            f"Traceback: {traceback_string}"
+        )
         raise e
+
 
 def load_chunks_and_prompt_from_file(filepath: str) -> Tuple[List[Dict[str, Any]], str]:
     """
@@ -115,24 +135,45 @@ def load_chunks_and_prompt_from_file(filepath: str) -> Tuple[List[Dict[str, Any]
             if chunks and isinstance(chunks[0], dict):
                 chunk_meta = chunks[0].get('metadata', {}) or chunks[0].get('chunk_metadata', {})
                 if isinstance(chunk_meta, dict):
-                    prompt = chunk_meta.get('prompt') or chunk_meta.get('query') or chunk_meta.get('query_text')
+                    prompt = (
+                        chunk_meta.get('prompt') or 
+                        chunk_meta.get('query') or 
+                        chunk_meta.get('query_text')
+                    )
         else:
             raise ValueError(f"Invalid JSON structure in file: {filepath}")
         
         # Validate that we found both prompt and chunks
         if not prompt:
             # Additional debugging for the specific structure
-            logger.error(f"[5_LLM_RESPONSE] JSON structure debug: {list(data.keys()) if isinstance(data, dict) else type(data)}")
+            logger.error(
+                f"[5_LLM_RESPONSE] JSON structure debug: "
+                f"{list(data.keys()) if isinstance(data, dict) else type(data)}"
+            )
             if isinstance(data, dict) and 'metadata' in data:
-                logger.error(f"[5_LLM_RESPONSE] Metadata keys: {list(data['metadata'].keys())}")
-            raise ValueError(f"No prompt found in JSON file. Expected keys: ['query_text' in metadata, 'prompt', 'query', 'question', 'user_prompt', 'user_query']")
+                logger.error(
+                    f"[5_LLM_RESPONSE] Metadata keys: {list(data['metadata'].keys())}"
+                )
+            raise ValueError(
+                "No prompt found in JSON file. Expected keys: ['query_text' in metadata, "
+                "'prompt', 'query', 'question', 'user_prompt', 'user_query']"
+            )
         if not chunks:
-            raise ValueError(f"No chunks found in JSON file. Expected keys: ['evaluated_chunks', 'chunks', 'retrieved_chunks', 'context_chunks', 'documents']")
+            raise ValueError(
+                "No chunks found in JSON file. Expected keys: ['evaluated_chunks', "
+                "'chunks', 'retrieved_chunks', 'context_chunks', 'documents']"
+            )
         if not isinstance(chunks, list):
             raise ValueError(f"Chunks must be a list, got: {type(chunks)}")
         
-        logger.info(f"[5_LLM_RESPONSE] Successfully loaded {len(chunks)} chunks and prompt from file")
-        logger.info(f"[5_LLM_RESPONSE] Prompt: {prompt[:100]}{'...' if len(prompt) > 100 else ''}")
+        logger.info(
+            f"[5_LLM_RESPONSE] Successfully loaded {len(chunks)} chunks and "
+            f"prompt from file"
+        )
+        logger.info(
+            f"[5_LLM_RESPONSE] Prompt: {prompt[:100]}"
+            f"{'...' if len(prompt) > 100 else ''}"
+        )
         
         return chunks, prompt
         
@@ -146,8 +187,11 @@ def load_chunks_and_prompt_from_file(filepath: str) -> Tuple[List[Dict[str, Any]
         logger.error(f"[5_LLM_RESPONSE] Data structure error: {e}")
         raise
     except Exception as e:
-        logger.error(f"[5_LLM_RESPONSE] Error loading chunks and prompt from file {filepath}: {e}")
+        logger.error(
+            f"[5_LLM_RESPONSE] Error loading chunks and prompt from file {filepath}: {e}"
+        )
         raise
+
 
 def extract_main_question(query_text: str) -> str:
     """
@@ -160,7 +204,10 @@ def extract_main_question(query_text: str) -> str:
         Clean main question without bullet points or detailed instructions
     """
     # Split by common separators that indicate additional instructions
-    separators = ['\n\nPlease extract:', '\n\nPlease identify:', '\n\nPlease analyze:', '\n\nPlease determine:']
+    separators = [
+        '\n\nPlease extract:', '\n\nPlease identify:',
+        '\n\nPlease analyze:', '\n\nPlease determine:'
+    ]
     
     main_question = query_text
     for separator in separators:
@@ -173,7 +220,12 @@ def extract_main_question(query_text: str) -> str:
     
     return main_question
 
-def get_llm_response(llm_client: LLMClient, question: str, chunks: List[Dict[str, Any]]) -> Any:
+
+def get_llm_response(
+    llm_client: LLMClient, 
+    question: str, 
+    chunks: List[Dict[str, Any]]
+) -> Any:
     """
     Get structured response from LLM using the provided chunks and question.
     
@@ -186,7 +238,9 @@ def get_llm_response(llm_client: LLMClient, question: str, chunks: List[Dict[str
         Structured LLM response (LLMResponseModel or None on error)
     """
     try:
-        logger.info(f"[5_LLM_RESPONSE] Getting LLM response for question: {question[:100]}...")
+        logger.info(
+            f"[5_LLM_RESPONSE] Getting LLM response for question: {question[:100]}..."
+        )
         logger.info(f"[5_LLM_RESPONSE] Using {len(chunks)} chunks as context")
         
         # Format chunks for LLM
@@ -208,10 +262,19 @@ def get_llm_response(llm_client: LLMClient, question: str, chunks: List[Dict[str
         
     except Exception as e:
         traceback_string = traceback.format_exc()
-        logger.error(f"[5_LLM_RESPONSE] Error in get_llm_response: {e}\nTraceback: {traceback_string}")
+        logger.error(
+            f"[5_LLM_RESPONSE] Error in get_llm_response: {e}\n"
+            f"Traceback: {traceback_string}"
+        )
         return None
 
-def process_response(llm_response: Any, original_chunks: List[Dict[str, Any]], question: str, main_question: str = None) -> Dict[str, Any]:
+
+def process_response(
+    llm_response: Any, 
+    original_chunks: List[Dict[str, Any]], 
+    question: str, 
+    main_question: str = None
+) -> Dict[str, Any]:
     """
     Process and validate the LLM response into final JSON format.
 
@@ -245,7 +308,10 @@ def process_response(llm_response: Any, original_chunks: List[Dict[str, Any]], q
         
     except Exception as e:
         traceback_string = traceback.format_exc()
-        logger.error(f"[5_LLM_RESPONSE] Error in process_response: {e}\nTraceback: {traceback_string}")
+        logger.error(
+            f"[5_LLM_RESPONSE] Error in process_response: {e}\n"
+            f"Traceback: {traceback_string}"
+        )
         
         # Return error response with main question if available
         return {
@@ -257,7 +323,12 @@ def process_response(llm_response: Any, original_chunks: List[Dict[str, Any]], q
             "error_details": str(e)
         }
 
-def process_country_file(country_name: str, retrieve_dir: Path, retrieve_hop_dir: Path) -> Dict[str, Any]:
+
+def process_country_file(
+    country_name: str, 
+    retrieve_dir: Path, 
+    retrieve_hop_dir: Path
+) -> Dict[str, Any]:
     """
     Process a single country by merging data from both retrieve and retrieve_hop directories.
     
@@ -304,19 +375,25 @@ def process_country_file(country_name: str, retrieve_dir: Path, retrieve_hop_dir
             )
             
             if not full_query_text or not merged_chunks:
-                logger.warning(f"Question ID {question_id} has no valid question text or chunks")
+                logger.warning(
+                    f"Question ID {question_id} has no valid question text or chunks"
+                )
                 continue
             
             # Extract just the main question for JSON storage
             main_question = extract_main_question(full_query_text)
             logger.info(f"Main question extracted: {main_question}")
-            logger.info(f"Using {len(merged_chunks)} merged chunks for question {question_id}")
+            logger.info(
+                f"Using {len(merged_chunks)} merged chunks for question {question_id}"
+            )
             
             # Get LLM response using the FULL detailed query (not just main question)
             llm_response = get_llm_response(llm_client, full_query_text, merged_chunks)
             
             # Process the LLM response, but store the main question in the JSON
-            processed_response = process_response(llm_response, merged_chunks, full_query_text, main_question)
+            processed_response = process_response(
+                llm_response, merged_chunks, full_query_text, main_question
+            )
             
             # Store the processed response
             results[question_id] = processed_response
@@ -337,9 +414,16 @@ def process_country_file(country_name: str, retrieve_dir: Path, retrieve_hop_dir
             "questions": {}
         }
 
-def merge_chunks_from_directories(country_name: str, question_id: str, retrieve_dir: Path, retrieve_hop_dir: Path) -> Tuple[List[Dict[str, Any]], str]:
+
+def merge_chunks_from_directories(
+    country_name: str, 
+    question_id: str, 
+    retrieve_dir: Path, 
+    retrieve_hop_dir: Path
+) -> Tuple[List[Dict[str, Any]], str]:
     """
-    Merge chunks from both retrieve and retrieve_hop directories for a given country and question.
+    Merge chunks from both retrieve and retrieve_hop directories for a given
+    country and question.
     
     Args:
         country_name: Name of the country
@@ -405,14 +489,20 @@ def merge_chunks_from_directories(country_name: str, question_id: str, retrieve_
                         merged_chunks.append(chunk)
                         new_chunks_count += 1
                 
-                logger.info(f"Added {new_chunks_count} new chunks from retrieve_hop directory")
+                logger.info(
+                    f"Added {new_chunks_count} new chunks from retrieve_hop directory"
+                )
         
         if not question_text:
             logger.warning(f"No question text found for {country_name} - {question_id}")
-            question_text = f"Question {question_id.split('_')[1] if '_' in question_id else question_id}"
+            question_text = (
+                f"Question {question_id.split('_')[1] if '_' in question_id else question_id}"
+            )
         
         total_chunks = len(merged_chunks)
-        logger.info(f"Total merged chunks for {country_name} - {question_id}: {total_chunks}")
+        logger.info(
+            f"Total merged chunks for {country_name} - {question_id}: {total_chunks}"
+        )
         
         return merged_chunks, question_text
         
@@ -420,6 +510,7 @@ def merge_chunks_from_directories(country_name: str, question_id: str, retrieve_
         logger.error(f"Error merging chunks for {country_name} - {question_id}: {str(e)}")
         logger.error(traceback.format_exc())
         return [], f"Error loading question {question_id}"
+
 
 def main():
     """
@@ -442,7 +533,8 @@ def main():
         )
         
         logger.info("[5_LLM_RESPONSE] Starting LLM response pipeline...")
-          # Set up directories
+        
+        # Set up directories
         retrieve_dir = project_root / "data" / "retrieve"
         retrieve_hop_dir = project_root / "data" / "retrieve_hop"
         llm_output_dir = project_root / "data" / "llm"
@@ -458,7 +550,9 @@ def main():
             retrieve_files.update([f.stem for f in retrieve_hop_dir.glob("*.json")])
         
         if not retrieve_files:
-            logger.error(f"No JSON files found in {retrieve_dir} or {retrieve_hop_dir}")
+            logger.error(
+                f"No JSON files found in {retrieve_dir} or {retrieve_hop_dir}"
+            )
             return
         
         logger.info(f"Found {len(retrieve_files)} unique countries to process")
@@ -469,14 +563,16 @@ def main():
                 logger.info(f"Processing country: {country_name}")
                 
                 # Process the country with merged data from both directories
-                llm_results = process_country_file(country_name, retrieve_dir, retrieve_hop_dir)
+                llm_results = process_country_file(
+                    country_name, retrieve_dir, retrieve_hop_dir
+                )
                 
                 # Create output filename with timestamp
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 output_filename = f"{country_name}_{timestamp}.json"
                 output_path = llm_output_dir / output_filename
                 
-                # Load original retrieve data to get query texts (prefer retrieve over retrieve_hop)
+                # Load original retrieve data to get query texts
                 retrieve_file = retrieve_dir / f"{country_name}.json"
                 retrieve_hop_file = retrieve_hop_dir / f"{country_name}.json"
                 
@@ -497,7 +593,10 @@ def main():
                         "country_name": country_name,
                         "timestamp": datetime.now().isoformat(),
                         "source_file": source_file_name,
-                        "description": f"LLM-generated responses for {country_name} based on merged chunks from retrieve and retrieve_hop",
+                        "description": (
+                            f"LLM-generated responses for {country_name} based on "
+                            f"merged chunks from retrieve and retrieve_hop"
+                        ),
                         "question_count": 0
                     },
                     "questions": {}
@@ -506,13 +605,15 @@ def main():
                 # Process each question result - llm_results keys are question IDs
                 question_count = 0
                 for question_id, question_result in llm_results.items():
-                    if question_id == "metadata":  # Skip metadata from process_country_file
+                    if question_id == "metadata":  # Skip metadata
                         continue
                     
                     question_count += 1
                     
                     # Get corresponding retrieve data for this question
-                    retrieve_question_data = retrieve_data.get('questions', {}).get(question_id, {})
+                    retrieve_question_data = retrieve_data.get(
+                        'questions', {}
+                    ).get(question_id, {})
                     query_text = retrieve_question_data.get('question', 'Unknown')
                     
                     # Count total chunks used (from both directories)
@@ -520,7 +621,10 @@ def main():
                     
                     # Build the question structure
                     final_output["questions"][question_id] = {
-                        "question_number": int(question_id.split('_')[1]) if '_' in question_id else question_count,
+                        "question_number": (
+                            int(question_id.split('_')[1]) 
+                            if '_' in question_id else question_count
+                        ),
                         "query_text": query_text,
                         "llm_response": question_result,
                         "chunk_count": total_chunks_used
@@ -533,7 +637,10 @@ def main():
                 with open(output_path, 'w', encoding='utf-8') as f:
                     json.dump(final_output, f, indent=2, ensure_ascii=False)
                 
-                logger.info(f"Saved LLM responses to: {output_path} ({question_count} questions processed)")
+                logger.info(
+                    f"Saved LLM responses to: {output_path} "
+                    f"({question_count} questions processed)"
+                )
                 
             except Exception as e:
                 logger.error(f"Error processing {country_name}: {e}")
@@ -544,21 +651,33 @@ def main():
         
     except Exception as e:
         traceback_string = traceback.format_exc()
-        logger.error(f"[5_LLM_RESPONSE] Error in main: {e}\nTraceback: {traceback_string}")
+        logger.error(
+            f"[5_LLM_RESPONSE] Error in main: {e}\n"
+            f"Traceback: {traceback_string}"
+        )
         print(f"Error: {e}")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run the LLM response script with chunks and prompt from evaluated_chunks.json.')
+    parser = argparse.ArgumentParser(
+        description='Run the LLM response script with chunks and prompt from JSON files.'
+    )
     
     # Optional arguments
-    parser.add_argument('--prompt', type=str, 
-                       help='Optional prompt override (if not provided, reads from JSON file)')
-    parser.add_argument('--no-guided-json', action='store_true', 
-                       help='Disable guided JSON (use fallback parsing)')
+    parser.add_argument(
+        '--prompt', type=str,
+        help='Optional prompt override (if not provided, reads from JSON file)'
+    )
+    parser.add_argument(
+        '--no-guided-json', action='store_true',
+        help='Disable guided JSON (use fallback parsing)'
+    )
     
     # Legacy support for old argument names
-    parser.add_argument('--chunks', type=str, 
-                       help='JSON string of chunks (legacy support).')
+    parser.add_argument(
+        '--chunks', type=str,
+        help='JSON string of chunks (legacy support).'
+    )
     
     args = parser.parse_args()
     
@@ -571,7 +690,12 @@ if __name__ == "__main__":
                 chunks_list = json.loads(args.chunks)
             except json.JSONDecodeError as e:
                 logger.error(f"Error parsing chunks JSON string: {e}")
-                print(json.dumps({"error": f"Invalid chunks JSON: {str(e)}"}, indent=2, ensure_ascii=False))
+                print(
+                    json.dumps(
+                        {"error": f"Invalid chunks JSON: {str(e)}"}, 
+                        indent=2, ensure_ascii=False
+                    )
+                )
                 sys.exit(1)
             
             # Create temporary file with both chunks and prompt
@@ -599,7 +723,12 @@ if __name__ == "__main__":
         
     except Exception as e:
         logger.error(f"Error in main execution: {e}")
-        print(json.dumps({"error": f"Execution error: {str(e)}"}, indent=2, ensure_ascii=False))
+        print(
+            json.dumps(
+                {"error": f"Execution error: {str(e)}"}, 
+                indent=2, ensure_ascii=False
+            )
+        )
         sys.exit(1)
 
     # Usage examples:
