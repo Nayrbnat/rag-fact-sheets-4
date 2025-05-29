@@ -178,3 +178,26 @@ cd climate-policy-extractor
 # Run the spider
 scrapy crawl ndc_spider
 ```
+
+## 5. Checking for Cyclomatic Complexity
+
+To check for cyclomatic complexity in your code, you can use the `radon` tool. First, install it:
+
+### Check code complexity
+
+```bash
+radon cc . -s
+```
+
+### check for code quality
+
+```bash
+flake8 --max-complexity=10 
+```
+
+### Comprehensive Analysis for a specific script
+
+```bash
+pylint yourfile.py
+```
+
