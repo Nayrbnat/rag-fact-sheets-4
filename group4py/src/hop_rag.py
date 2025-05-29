@@ -513,35 +513,56 @@ class HopRAGGraphProcessor:
 
     async def bfs_multi_hop_retrieve(self, query: str, max_hops: int = 3, 
                                    top_k: int = 20) -> List[Dict]:
-        """Optimized BFS multi-hop retrieval"""
+        """Optimized BFS multi-hop retrieval with proper tsquery handling"""
         
         engine = self.db_connection.get_engine()
         
-        # Convert the query to individual keywords for more flexible matching
-        query_terms = query.strip().split()
+        # Clean and prepare the query for tsquery
+        def clean_for_tsquery(text: str) -> str:
+            """Clean text to be safe for PostgreSQL tsquery"""
+            # Remove special characters that break tsquery
+            cleaned = re.sub(r'[^\w\s]', ' ', text)
+            # Split into words and filter
+            words = [word for word in cleaned.split() if len(word) >= 3]
+            # Limit to reasonable number of terms
+            limited_words = words[:10]  # Limit to 10 words maximum
+            # Join with OR operator
+            return ' | '.join(limited_words) if limited_words else 'emissions'
         
-        # Only keep terms with 3+ characters to avoid common words
-        filtered_terms = [term for term in query_terms if len(term) >= 3]
-        
-        # Create a more flexible query by using OR between terms
-        flexible_query = ' | '.join(filtered_terms)
+        # Convert the query to a safe tsquery format
+        flexible_query = clean_for_tsquery(query)
         
         logger.info(f"Original query: '{query[:50]}...'")
-        logger.info(f"Using flexible keyword search: '{flexible_query[:100]}...'")
+        logger.info(f"Using cleaned tsquery: '{flexible_query}'")
         
         # First check if there are matching chunks for the flexible query
         with engine.connect() as conn:
-            check_query = text("""
-                SELECT COUNT(*) 
-                FROM doc_chunks 
-                WHERE to_tsvector('english', content) @@ to_tsquery('english', :query)
-            """)
-            initial_match_count = conn.execute(check_query, {"query": flexible_query}).scalar() or 0
-            logger.info(f"Initial text match count for query: {initial_match_count}")
-            
-            if initial_match_count == 0:
-                logger.warning("No initial text matches found. BFS query will return no results.")
-                return []
+            try:
+                check_query = text("""
+                    SELECT COUNT(*) 
+                    FROM doc_chunks 
+                    WHERE to_tsvector('english', content) @@ to_tsquery('english', :query)
+                """)
+                initial_match_count = conn.execute(check_query, {"query": flexible_query}).scalar() or 0
+                logger.info(f"Initial text match count for query: {initial_match_count}")
+                
+                if initial_match_count == 0:
+                    logger.warning(f"No initial text matches found for query: '{flexible_query}'")
+                    # Try with even simpler query
+                    simple_query = flexible_query.split(' | ')[0] if ' | ' in flexible_query else flexible_query
+                    logger.info(f"Trying simpler query: '{simple_query}'")
+                    simple_count = conn.execute(check_query, {"query": simple_query}).scalar() or 0
+                    if simple_count == 0:
+                        logger.warning("No matches found even with simple query. Returning empty results.")
+                        return []
+                    flexible_query = simple_query
+                
+            except Exception as e:
+                logger.error(f"Error in tsquery check: {e}")
+                # Fallback to single word search
+                first_word = query.split()[0] if query.split() else 'emissions'
+                flexible_query = first_word
+                logger.info(f"Falling back to single word: '{flexible_query}'")
         
         # Now check if we have any relationships to traverse
         with engine.connect() as conn:
@@ -552,75 +573,81 @@ class HopRAGGraphProcessor:
         with engine.connect() as conn:
             logger.info(f"Executing BFS query with max_hops={max_hops}, top_k={top_k}")
             
-            # Execute the BFS query with the modified flexible search
-            result = conn.execute(text("""
-                WITH RECURSIVE hop_expansion AS (
-                    -- Initial query matching with flexible term search
-                    SELECT 
-                        dc.id as chunk_id,
-                        dc.content,
-                        ARRAY[dc.id] as path,
-                        0 as hops,
-                        CAST(1.0 AS DOUBLE PRECISION) as confidence,
-                        CAST(ts_rank(to_tsvector('english', dc.content), to_tsquery('english', :query)) AS DOUBLE PRECISION) as initial_relevance
-                    FROM doc_chunks dc
-                    WHERE to_tsvector('english', dc.content) @@ to_tsquery('english', :query)
-                    
-                    UNION ALL
-                    
-                    -- Recursive expansion with optimizations
-                    SELECT 
-                        lr.target_chunk_id as chunk_id,
-                        dc.content,
-                        he.path || lr.target_chunk_id,
-                        he.hops + 1,
-                        he.confidence * lr.confidence * 0.9 as confidence,
-                        he.initial_relevance * 0.8
-                    FROM hop_expansion he
-                    JOIN logical_relationships lr ON he.chunk_id = lr.source_chunk_id
-                    JOIN doc_chunks dc ON lr.target_chunk_id = dc.id
-                    WHERE he.hops < :max_hops 
-                      AND lr.confidence > 0.7
-                      AND he.confidence > 0.4
-                      AND NOT (lr.target_chunk_id = ANY(he.path))
-                      AND array_length(he.path, 1) < 20
-                ),
-                -- Separate CTE to get top initial matches
-                top_initial AS (
-                    SELECT chunk_id, content, hops, confidence, initial_relevance
-                    FROM hop_expansion
-                    WHERE hops = 0
-                    ORDER BY initial_relevance DESC
-                    LIMIT 5
-                ),
-                -- Combine top initial matches with their expansions
-                filtered_expansion AS (
-                    SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
-                    FROM hop_expansion he
-                    WHERE he.hops = 0 
-                      AND he.chunk_id IN (SELECT chunk_id FROM top_initial)
-                    
-                    UNION ALL
-                    
-                    SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
-                    FROM hop_expansion he
-                    WHERE he.hops > 0
-                      AND EXISTS (
-                          SELECT 1 FROM top_initial ti 
-                          WHERE ti.chunk_id = ANY(he.path)
-                      )
-                )
-                SELECT DISTINCT 
-                    chunk_id, 
-                    content, 
-                    hops, 
-                    confidence,
-                    initial_relevance
-                FROM filtered_expansion
-                WHERE confidence > 0.3
-                ORDER BY confidence DESC, initial_relevance DESC, hops ASC
-                LIMIT :top_k;
-            """), {"query": flexible_query, "max_hops": max_hops, "top_k": top_k * 2}).fetchall()
+            try:
+                # Execute the BFS query with the cleaned flexible search
+                result = conn.execute(text("""
+                    WITH RECURSIVE hop_expansion AS (
+                        -- Initial query matching with flexible term search
+                        SELECT 
+                            dc.id as chunk_id,
+                            dc.content,
+                            ARRAY[dc.id] as path,
+                            0 as hops,
+                            CAST(1.0 AS DOUBLE PRECISION) as confidence,
+                            CAST(ts_rank(to_tsvector('english', dc.content), to_tsquery('english', :query)) AS DOUBLE PRECISION) as initial_relevance
+                        FROM doc_chunks dc
+                        WHERE to_tsvector('english', dc.content) @@ to_tsquery('english', :query)
+                        
+                        UNION ALL
+                        
+                        -- Recursive expansion with optimizations
+                        SELECT 
+                            lr.target_chunk_id as chunk_id,
+                            dc.content,
+                            he.path || lr.target_chunk_id,
+                            he.hops + 1,
+                            he.confidence * lr.confidence * 0.9 as confidence,
+                            he.initial_relevance * 0.8
+                        FROM hop_expansion he
+                        JOIN logical_relationships lr ON he.chunk_id = lr.source_chunk_id
+                        JOIN doc_chunks dc ON lr.target_chunk_id = dc.id
+                        WHERE he.hops < :max_hops 
+                          AND lr.confidence > 0.7
+                          AND he.confidence > 0.4
+                          AND NOT (lr.target_chunk_id = ANY(he.path))
+                          AND array_length(he.path, 1) < 20
+                    ),
+                    -- Separate CTE to get top initial matches
+                    top_initial AS (
+                        SELECT chunk_id, content, hops, confidence, initial_relevance
+                        FROM hop_expansion
+                        WHERE hops = 0
+                        ORDER BY initial_relevance DESC
+                        LIMIT 5
+                    ),
+                    -- Combine top initial matches with their expansions
+                    filtered_expansion AS (
+                        SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
+                        FROM hop_expansion he
+                        WHERE he.hops = 0 
+                          AND he.chunk_id IN (SELECT chunk_id FROM top_initial)
+                        
+                        UNION ALL
+                        
+                        SELECT he.chunk_id, he.content, he.hops, he.confidence, he.initial_relevance
+                        FROM hop_expansion he
+                        WHERE he.hops > 0
+                          AND EXISTS (
+                              SELECT 1 FROM top_initial ti 
+                              WHERE ti.chunk_id = ANY(he.path)
+                          )
+                    )
+                    SELECT DISTINCT 
+                        chunk_id, 
+                        content, 
+                        hops, 
+                        confidence,
+                        initial_relevance
+                    FROM filtered_expansion
+                    WHERE confidence > 0.3
+                    ORDER BY confidence DESC, initial_relevance DESC, hops ASC
+                    LIMIT :top_k;
+                """), {"query": flexible_query, "max_hops": max_hops, "top_k": top_k * 2}).fetchall()
+                
+            except Exception as e:
+                logger.error(f"Error in BFS query execution: {e}")
+                logger.error(f"Query that failed: '{flexible_query}'")
+                return []
         
         # Log the results
         result_count = len(result)

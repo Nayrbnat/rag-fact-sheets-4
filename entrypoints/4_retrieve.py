@@ -385,81 +385,108 @@ def retrieve_chunks_with_hop(prompt: str, top_k: int = 20, country: Optional[str
                            question_number: Optional[int] = None) -> List[Dict[str, Any]]:
     """
     Retrieve chunks using graph-based multi-hop reasoning through relationship-based navigation.
-    
-    Args:
-        prompt: Query text to search for
-        top_k: Number of top chunks to retrieve (default: 20)
-        country: Optional country filter
-        question_number: Optional question number for keyword enhancement
-        
-    Returns:
-        List of dictionaries containing chunks with scores and metadata
     """
     try:
-        print(f"[HOP_RETRIEVE] Starting hop retrieval for query: '{prompt[:50]}...'")
+        print(f"[HOP_RETRIEVE] Starting hop retrieval for country: {country}, query: '{prompt[:50]}...'")
         
-        # Enhance query with relevant keywords from HOP_KEYWORDS
+        # Enhanced query should include country context
         enhanced_query = prompt
         
         if question_number is not None and question_number in HOP_KEYWORDS:
-            # Get keywords for this specific question number
             keywords = HOP_KEYWORDS[question_number]
-            # Take a subset of keywords to avoid overly long queries
             selected_keywords = " ".join(keywords[:8])
-            enhanced_query = f"{selected_keywords}"
-            print(f"[HOP_RETRIEVE] Enhanced query with keywords for question {question_number}")
-            print(f"[HOP_RETRIEVE] Using keywords: {selected_keywords}")
+            
+            # Include country in the enhanced query for better filtering
+            if country:
+                enhanced_query = f"{country} {selected_keywords} {prompt}"
+            else:
+                enhanced_query = f"{selected_keywords} {prompt}"
+                
+            print(f"[HOP_RETRIEVE] Enhanced query with country and keywords: {enhanced_query[:100]}...")
         else:
-            # Use general NDC keywords if no specific question number
             selected_keywords = " ".join(GENERAL_NDC_KEYWORDS[:5])
-            enhanced_query = f"{selected_keywords}"
-            print(f"[HOP_RETRIEVE] Using general keywords: {selected_keywords}")
+            if country:
+                enhanced_query = f"{country} {selected_keywords} {prompt}"
+            else:
+                enhanced_query = f"{selected_keywords} {prompt}"
+            print(f"[HOP_RETRIEVE] Using general keywords with country: {enhanced_query[:100]}...")
         
-        # Create database connection
         config = DatabaseConfig.from_env()
         db_connection = Connection(config)
         if not db_connection.connect():
             print("[HOP_RETRIEVE] Failed to connect to database")
             return []
         
-        # Check if logical_relationships table has data
-        engine = db_connection.get_engine()
-        with engine.connect() as conn:
-            # Check total relationship count
-            rel_count = conn.execute(text("SELECT COUNT(*) FROM logical_relationships")).scalar() or 0
-            print(f"[HOP_RETRIEVE] Found {rel_count} total relationships in database")
-            
-            # Check chunk count for the specified country
-            if country:
-                country_chunks = conn.execute(
-                    text("SELECT COUNT(*) FROM doc_chunks WHERE chunk_data->>'country' = :country"),
-                    {"country": country}
-                ).scalar() or 0
-                print(f"[HOP_RETRIEVE] Found {country_chunks} chunks for country '{country}'")
-        
         # Initialize the GraphHopRetriever
         hop_retriever = GraphHopRetriever(connection=db_connection)
         
-        # Retrieve chunks using graph-based hop reasoning with enhanced query
-        print(f"[HOP_RETRIEVE] Executing hop reasoning retrieval with enhanced query")
+        print(f"[HOP_RETRIEVE] Executing hop reasoning for country: {country}")
         results = hop_retriever.retrieve_with_hop_reasoning(
             query=enhanced_query,
-            top_k=top_k,
+            top_k=top_k * 2,  # Get more results to allow for filtering
             country=country
         )
         
-        if not results:
-            print("[HOP_RETRIEVE] No results returned from hop reasoning")
-        else:
-            print(f"[HOP_RETRIEVE] Retrieved {len(results)} chunks using hop reasoning")
+        # CRITICAL FIX: Filter results by country since hop retriever isn't doing it
+        if country and results:
+            print(f"[HOP_RETRIEVE] Pre-filter: {len(results)} chunks")
+            
+            # Get chunk metadata from database to properly filter
+            session = db_connection.get_session()
+            try:
+                chunk_ids = [str(result['id']) for result in results]
+                
+                # Query to get proper country information for these chunks
+                chunk_query = text("""
+                    SELECT c.id::text, c.chunk_data->>'country' as country, c.content, c.doc_id
+                    FROM doc_chunks c
+                    WHERE c.id::text = ANY(:chunk_ids)
+                      AND LOWER(c.chunk_data->>'country') = LOWER(:country)
+                """)
+                
+                valid_chunks = session.execute(chunk_query, {
+                    'chunk_ids': chunk_ids,
+                    'country': country
+                }).fetchall()
+                
+                print(f"[HOP_RETRIEVE] Found {len(valid_chunks)} chunks for country '{country}'")
+                
+                # Create lookup for valid chunks
+                valid_chunk_lookup = {row[0]: {'country': row[1], 'content': row[2], 'doc_id': row[3]} 
+                                    for row in valid_chunks}
+                
+                # Filter and update results
+                filtered_results = []
+                for result in results:
+                    chunk_id = str(result['id'])
+                    if chunk_id in valid_chunk_lookup:
+                        # Update result with proper metadata
+                        chunk_info = valid_chunk_lookup[chunk_id]
+                        result['chunk_data'] = {'country': chunk_info['country']}
+                        result['content'] = chunk_info['content']
+                        result['doc_id'] = chunk_info['doc_id']
+                        filtered_results.append(result)
+                
+                results = filtered_results[:top_k]  # Limit to requested top_k
+                print(f"[HOP_RETRIEVE] After country filtering: {len(results)} chunks for {country}")
+                
+            finally:
+                session.close()
         
-        # Don't save individual files - we'll save one consolidated file per country
+        # Debug the final results
+        if results:
+            countries_in_results = set()
+            for result in results:
+                result_country = result.get('chunk_data', {}).get('country', 'Unknown')
+                countries_in_results.add(result_country)
+            print(f"[HOP_RETRIEVE] Final results contain chunks from countries: {countries_in_results}")
+        
         return results
         
     except Exception as e:
         print(f"[HOP_RETRIEVE] Error in graph hop retrieval: {e}")
-        traceback_string = traceback.format_exc()
-        print(f"[HOP_RETRIEVE] Traceback: {traceback_string}")
+        import traceback
+        traceback.print_exc()
         return []
 
 @Logger.log(log_file=project_root / "logs/retrieve.log", log_level="INFO")
@@ -647,6 +674,7 @@ def run_script(question_number: int = None, country: Optional[str] = None,
     except Exception as e:
         traceback_string = traceback.format_exc()
         raise e
+
 
 if __name__ == "__main__":
     import argparse
