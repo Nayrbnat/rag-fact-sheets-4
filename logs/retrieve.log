@@ -23116,3 +23116,1108 @@ TypeError: 'bool' object does not support the context manager protocol
 2025-05-28 23:07:58,020 - hop_rag - INFO - BFS query returned 100 results
 2025-05-28 23:07:58,065 - evaluator - INFO - Raw processor results: 5 total nodes found
 2025-05-28 23:07:58,066 - evaluator - INFO - Retrieved 5 chunks using hop reasoning
+2025-05-29 10:08:52,945 - database - INFO - Successfully connected to database
+2025-05-29 10:08:53,096 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:08:53,096 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:08:56,174 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:08:56,176 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:08:56,176 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:08:59,325 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:08:59,325 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:08:59,333 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:08:59,374 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:08:59,382 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:08:59,521 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:08:59.491310', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:08:59,521 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:09:00,718 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:09:00,806 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:09:00,858 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:09:00,865 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:09:00,865 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:09:00,873 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:09:00,884 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:09:00,952 - database - INFO - Successfully connected to database
+2025-05-29 10:09:01,619 - database - INFO - Successfully connected to database
+2025-05-29 10:09:01,635 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:09:01,654 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:09:01,675 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:01,684 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:01,844 - database - INFO - Successfully connected to database
+2025-05-29 10:09:01,844 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:09:01,851 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:09:01,855 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:09:04,375 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:09:04,376 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:09:04,377 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:09:04,380 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:09:04,383 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:09:04,384 - evaluator - INFO - Starting hop retrieval for query: 'Afghanistan reduction target emissions target redu...' (country: Afghanistan)
+2025-05-29 10:09:04,400 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:09:04,436 - evaluator - INFO - Relationships for country 'Afghanistan': 512
+2025-05-29 10:09:04,440 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:09:04,440 - hop_rag - INFO - Original query: 'Afghanistan reduction target emissions target redu...'
+2025-05-29 10:09:04,442 - hop_rag - INFO - Using cleaned tsquery: 'Afghanistan | reduction | target | emissions | target | reduce | emissions | GHG | emissions | carbon'
+2025-05-29 10:09:04,724 - hop_rag - INFO - Initial text match count for query: 356
+2025-05-29 10:09:04,748 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:09:04,752 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:09:06,023 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:09:06,148 - evaluator - INFO - Raw processor results: 30 total nodes found
+2025-05-29 10:09:06,150 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:09:06,165 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:09:06,166 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:09:06,879 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:09:06,879 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:09:06,879 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:09:10,102 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:09:10,102 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:09:10,102 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:09:10,120 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:09:10,120 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:09:10,230 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:09:10.230533', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:09:10,232 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:09:13,340 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:09:13,537 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:09:13,606 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:09:13,611 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:09:13,615 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:09:13,618 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:09:13,716 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:09:13,987 - database - INFO - Successfully connected to database
+2025-05-29 10:09:15,229 - database - INFO - Successfully connected to database
+2025-05-29 10:09:15,240 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:09:15,256 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:09:15,380 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:15,387 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:15,536 - database - INFO - Successfully connected to database
+2025-05-29 10:09:15,538 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:09:15,544 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:09:15,544 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:09:17,832 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:09:17,834 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:09:17,834 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:09:17,836 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:09:17,836 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:09:17,836 - evaluator - INFO - Starting hop retrieval for query: 'Afghanistan baseline year reference year base year...' (country: Afghanistan)
+2025-05-29 10:09:17,844 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:09:17,866 - evaluator - INFO - Relationships for country 'Afghanistan': 512
+2025-05-29 10:09:17,866 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:09:17,866 - hop_rag - INFO - Original query: 'Afghanistan baseline year reference year base year...'
+2025-05-29 10:09:17,866 - hop_rag - INFO - Using cleaned tsquery: 'Afghanistan | baseline | year | reference | year | base | year | compared | relative | with'
+2025-05-29 10:09:17,949 - hop_rag - INFO - Initial text match count for query: 443
+2025-05-29 10:09:17,971 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:09:17,973 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:09:18,865 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:09:18,962 - evaluator - INFO - Raw processor results: 28 total nodes found
+2025-05-29 10:09:18,962 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:09:18,979 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:09:18,981 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:09:19,606 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:09:19,607 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:09:19,607 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:09:22,669 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:09:22,669 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:09:22,671 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:09:22,690 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:09:22,690 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:09:22,802 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:09:22.802633', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:09:22,802 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:09:23,310 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:09:23,380 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:09:23,388 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:09:23,394 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:09:23,396 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:09:23,401 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:09:23,408 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:09:23,469 - database - INFO - Successfully connected to database
+2025-05-29 10:09:23,899 - database - INFO - Successfully connected to database
+2025-05-29 10:09:23,909 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:09:23,922 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:09:23,937 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:23,953 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:24,091 - database - INFO - Successfully connected to database
+2025-05-29 10:09:24,093 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:09:24,093 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:09:24,093 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:09:26,043 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:09:26,043 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:09:26,043 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:09:26,043 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:09:26,043 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:09:26,046 - evaluator - INFO - Starting hop retrieval for query: 'Afghanistan previous NDC initial NDC first NDC ear...' (country: Afghanistan)
+2025-05-29 10:09:26,054 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:09:26,076 - evaluator - INFO - Relationships for country 'Afghanistan': 512
+2025-05-29 10:09:26,078 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:09:26,078 - hop_rag - INFO - Original query: 'Afghanistan previous NDC initial NDC first NDC ear...'
+2025-05-29 10:09:26,078 - hop_rag - INFO - Using cleaned tsquery: 'Afghanistan | previous | NDC | initial | NDC | first | NDC | earlier | submission | prior'
+2025-05-29 10:09:26,159 - hop_rag - INFO - Initial text match count for query: 313
+2025-05-29 10:09:26,169 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:09:26,169 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:09:26,828 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:09:26,921 - evaluator - INFO - Raw processor results: 28 total nodes found
+2025-05-29 10:09:26,921 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:09:26,932 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:09:26,932 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:09:27,657 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:09:27,659 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:09:27,659 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:09:30,692 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:09:30,692 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:09:30,692 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:09:30,716 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:09:30,717 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:09:30,823 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:09:30.823769', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:09:30,826 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:09:31,414 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:09:31,477 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:09:31,486 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:09:31,490 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:09:31,493 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:09:31,495 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:09:31,503 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:09:31,571 - database - INFO - Successfully connected to database
+2025-05-29 10:09:32,015 - database - INFO - Successfully connected to database
+2025-05-29 10:09:32,027 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:09:32,040 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:09:32,062 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:32,075 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:32,216 - database - INFO - Successfully connected to database
+2025-05-29 10:09:32,216 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:09:32,224 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:09:32,224 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:09:33,733 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:09:33,733 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:09:33,733 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:09:33,733 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:09:33,733 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:09:33,733 - evaluator - INFO - Starting hop retrieval for query: 'Afghanistan implementation policy measures mitigat...' (country: Afghanistan)
+2025-05-29 10:09:33,742 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:09:33,760 - evaluator - INFO - Relationships for country 'Afghanistan': 512
+2025-05-29 10:09:33,766 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:09:33,766 - hop_rag - INFO - Original query: 'Afghanistan implementation policy measures mitigat...'
+2025-05-29 10:09:33,766 - hop_rag - INFO - Using cleaned tsquery: 'Afghanistan | implementation | policy | measures | mitigation | actions | mitigation | measures | policy | instruments'
+2025-05-29 10:09:34,030 - hop_rag - INFO - Initial text match count for query: 432
+2025-05-29 10:09:34,047 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:09:34,048 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:09:34,850 - hop_rag - INFO - BFS query returned 12 results
+2025-05-29 10:09:34,866 - evaluator - INFO - Raw processor results: 5 total nodes found
+2025-05-29 10:09:34,866 - evaluator - INFO - Retrieved 5 chunks using hop reasoning
+2025-05-29 10:09:34,882 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:09:34,882 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:09:35,636 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:09:35,639 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:09:35,639 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:09:38,606 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:09:38,606 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:09:38,606 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:09:38,624 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:09:38,624 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:09:38,728 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:09:38.728118', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:09:38,728 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:09:39,218 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:09:39,293 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:09:39,301 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:09:39,303 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:09:39,308 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:09:39,310 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:09:39,317 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:09:39,385 - database - INFO - Successfully connected to database
+2025-05-29 10:09:39,794 - database - INFO - Successfully connected to database
+2025-05-29 10:09:39,808 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:09:39,821 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:09:39,836 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:39,847 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:39,984 - database - INFO - Successfully connected to database
+2025-05-29 10:09:39,987 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:09:39,999 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:09:39,999 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:09:41,453 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:09:41,453 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:09:41,453 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:09:41,455 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:09:41,455 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:09:41,457 - evaluator - INFO - Starting hop retrieval for query: 'Afghanistan challenging sectors difficult sectors ...' (country: Afghanistan)
+2025-05-29 10:09:41,473 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:09:41,503 - evaluator - INFO - Relationships for country 'Afghanistan': 512
+2025-05-29 10:09:41,507 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:09:41,507 - hop_rag - INFO - Original query: 'Afghanistan challenging sectors difficult sectors ...'
+2025-05-29 10:09:41,507 - hop_rag - INFO - Using cleaned tsquery: 'Afghanistan | challenging | sectors | difficult | sectors | hard | abate | hard | abate | limitations'
+2025-05-29 10:09:41,775 - hop_rag - INFO - Initial text match count for query: 443
+2025-05-29 10:09:41,787 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:09:41,793 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:09:42,594 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:09:42,684 - evaluator - INFO - Raw processor results: 27 total nodes found
+2025-05-29 10:09:42,684 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:09:42,699 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:09:42,701 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:09:43,381 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:09:43,381 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:09:43,384 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:09:46,373 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:09:46,375 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:09:46,375 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:09:46,398 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:09:46,401 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:09:46,534 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:09:46.534946', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:09:46,538 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:09:47,114 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:09:47,185 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:09:47,196 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:09:47,200 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:09:47,203 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:09:47,207 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:09:47,212 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:09:47,265 - database - INFO - Successfully connected to database
+2025-05-29 10:09:47,769 - database - INFO - Successfully connected to database
+2025-05-29 10:09:47,778 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:09:47,785 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:09:47,805 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:47,819 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:47,973 - database - INFO - Successfully connected to database
+2025-05-29 10:09:47,974 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:09:47,985 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:09:47,985 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:09:49,686 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:09:49,686 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:09:49,686 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:09:49,686 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:09:49,691 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:09:49,693 - evaluator - INFO - Starting hop retrieval for query: 'Afghanistan adaptation adapt to climate resilience...' (country: Afghanistan)
+2025-05-29 10:09:49,700 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:09:49,716 - evaluator - INFO - Relationships for country 'Afghanistan': 512
+2025-05-29 10:09:49,717 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:09:49,717 - hop_rag - INFO - Original query: 'Afghanistan adaptation adapt to climate resilience...'
+2025-05-29 10:09:49,720 - hop_rag - INFO - Using cleaned tsquery: 'Afghanistan | adaptation | adapt | climate | resilience | climate | resilient | resilient | development | vulnerability'
+2025-05-29 10:09:49,970 - hop_rag - INFO - Initial text match count for query: 593
+2025-05-29 10:09:49,981 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:09:49,981 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:09:50,774 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:09:50,861 - evaluator - INFO - Raw processor results: 22 total nodes found
+2025-05-29 10:09:50,861 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:09:50,874 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:09:50,877 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:09:51,573 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:09:51,580 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:09:51,582 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:09:55,135 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:09:55,135 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:09:55,135 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:09:55,151 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:09:55,151 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:09:55,313 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:09:55.313073', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:09:55,315 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:09:55,905 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:09:55,976 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:09:55,981 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:09:55,988 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:09:55,988 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:09:55,994 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:09:56,004 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:09:56,074 - database - INFO - Successfully connected to database
+2025-05-29 10:09:56,519 - database - INFO - Successfully connected to database
+2025-05-29 10:09:56,529 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:09:56,541 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:09:56,560 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:56,570 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:09:56,727 - database - INFO - Successfully connected to database
+2025-05-29 10:09:56,727 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:09:56,736 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:09:56,738 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:09:58,576 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:09:58,581 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:09:58,581 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:09:58,581 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:09:58,581 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:09:58,584 - evaluator - INFO - Starting hop retrieval for query: 'Afghanistan climate finance financial resources fi...' (country: Afghanistan)
+2025-05-29 10:09:58,594 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:09:58,612 - evaluator - INFO - Relationships for country 'Afghanistan': 512
+2025-05-29 10:09:58,616 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:09:58,618 - hop_rag - INFO - Original query: 'Afghanistan climate finance financial resources fi...'
+2025-05-29 10:09:58,618 - hop_rag - INFO - Using cleaned tsquery: 'Afghanistan | climate | finance | financial | resources | financial | support | funding | investment | needs'
+2025-05-29 10:09:58,888 - hop_rag - INFO - Initial text match count for query: 522
+2025-05-29 10:09:58,904 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:09:58,906 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:09:59,600 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:09:59,699 - evaluator - INFO - Raw processor results: 28 total nodes found
+2025-05-29 10:09:59,699 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:09:59,713 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:09:59,716 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:10:00,489 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:10:00,489 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:10:00,491 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:10:04,101 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:10:04,101 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:10:04,101 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:10:04,128 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:10:04,130 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:10:04,259 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:10:04.259997', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:10:04,259 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:10:04,835 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:10:04,899 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:10:04,907 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:10:04,912 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:10:04,915 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:10:04,917 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:10:04,923 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:10:04,989 - database - INFO - Successfully connected to database
+2025-05-29 10:10:05,447 - database - INFO - Successfully connected to database
+2025-05-29 10:10:05,456 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:10:05,467 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:10:05,483 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:10:05,493 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 64/64 chunks
+2025-05-29 10:10:05,660 - database - INFO - Successfully connected to database
+2025-05-29 10:10:05,660 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:10:05,663 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:10:05,670 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:10:07,037 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:10:07,038 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:10:07,038 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:10:07,038 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:10:07,038 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:10:07,038 - evaluator - INFO - Starting hop retrieval for query: 'Afghanistan equity equitable fair share climate ju...' (country: Afghanistan)
+2025-05-29 10:10:07,046 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:10:07,066 - evaluator - INFO - Relationships for country 'Afghanistan': 512
+2025-05-29 10:10:07,069 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:10:07,070 - hop_rag - INFO - Original query: 'Afghanistan equity equitable fair share climate ju...'
+2025-05-29 10:10:07,070 - hop_rag - INFO - Using cleaned tsquery: 'Afghanistan | equity | equitable | fair | share | climate | justice | just | transition | social'
+2025-05-29 10:10:07,143 - hop_rag - INFO - Initial text match count for query: 469
+2025-05-29 10:10:07,159 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:10:07,161 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:10:07,707 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:10:07,765 - evaluator - INFO - Raw processor results: 5 total nodes found
+2025-05-29 10:10:07,765 - evaluator - INFO - Retrieved 5 chunks using hop reasoning
+2025-05-29 10:10:07,843 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:10:07,845 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:10:08,467 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:10:08,469 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:10:08,469 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:10:11,072 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:10:11,072 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:10:11,072 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:10:11,091 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:10:11,091 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:10:11,192 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:10:11.189546', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:10:11,192 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:10:11,693 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:10:11,762 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:10:11,773 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:10:11,775 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:10:11,779 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:10:11,782 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:10:11,785 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:10:11,847 - database - INFO - Successfully connected to database
+2025-05-29 10:10:12,316 - database - INFO - Successfully connected to database
+2025-05-29 10:10:12,328 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:10:12,339 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:10:12,380 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:12,448 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:13,557 - database - INFO - Successfully connected to database
+2025-05-29 10:10:13,559 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:10:13,567 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:10:13,569 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:10:15,064 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:10:15,064 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:10:15,064 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:10:15,067 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:10:15,067 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:10:15,067 - evaluator - INFO - Starting hop retrieval for query: 'Albania reduction target emissions target reduce e...' (country: Albania)
+2025-05-29 10:10:15,077 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:10:15,123 - evaluator - INFO - Relationships for country 'Albania': 7450
+2025-05-29 10:10:15,123 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:10:15,123 - hop_rag - INFO - Original query: 'Albania reduction target emissions target reduce e...'
+2025-05-29 10:10:15,123 - hop_rag - INFO - Using cleaned tsquery: 'Albania | reduction | target | emissions | target | reduce | emissions | GHG | emissions | carbon'
+2025-05-29 10:10:15,385 - hop_rag - INFO - Initial text match count for query: 555
+2025-05-29 10:10:15,397 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:10:15,401 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:10:20,082 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:10:20,179 - evaluator - INFO - Raw processor results: 29 total nodes found
+2025-05-29 10:10:20,179 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:10:20,192 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:10:20,193 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:10:20,831 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:10:20,832 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:10:20,832 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:10:23,406 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:10:23,406 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:10:23,408 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:10:23,424 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:10:23,424 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:10:23,518 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:10:23.518924', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:10:23,518 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:10:24,069 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:10:24,755 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:10:24,764 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:10:24,768 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:10:24,772 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:10:24,773 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:10:24,776 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:10:24,844 - database - INFO - Successfully connected to database
+2025-05-29 10:10:25,284 - database - INFO - Successfully connected to database
+2025-05-29 10:10:25,292 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:10:25,308 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:10:25,349 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:25,418 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:26,400 - database - INFO - Successfully connected to database
+2025-05-29 10:10:26,403 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:10:26,408 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:10:26,408 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:10:27,948 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:10:27,950 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:10:27,952 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:10:27,952 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:10:27,954 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:10:27,960 - evaluator - INFO - Starting hop retrieval for query: 'Albania baseline year reference year base year com...' (country: Albania)
+2025-05-29 10:10:27,976 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:10:28,047 - evaluator - INFO - Relationships for country 'Albania': 7450
+2025-05-29 10:10:28,049 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:10:28,049 - hop_rag - INFO - Original query: 'Albania baseline year reference year base year com...'
+2025-05-29 10:10:28,049 - hop_rag - INFO - Using cleaned tsquery: 'Albania | baseline | year | reference | year | base | year | compared | relative | with'
+2025-05-29 10:10:28,291 - hop_rag - INFO - Initial text match count for query: 586
+2025-05-29 10:10:28,304 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:10:28,306 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:10:29,546 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:10:29,641 - evaluator - INFO - Raw processor results: 26 total nodes found
+2025-05-29 10:10:29,641 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:10:29,653 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:10:29,656 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:10:30,236 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:10:30,238 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:10:30,238 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:10:33,182 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:10:33,182 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:10:33,184 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:10:33,198 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:10:33,198 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:10:33,309 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:10:33.309484', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:10:33,309 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:10:33,861 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:10:33,919 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:10:33,933 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:10:33,935 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:10:33,935 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:10:33,943 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:10:33,943 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:10:34,003 - database - INFO - Successfully connected to database
+2025-05-29 10:10:34,410 - database - INFO - Successfully connected to database
+2025-05-29 10:10:34,421 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:10:34,435 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:10:34,477 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:34,545 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:35,490 - database - INFO - Successfully connected to database
+2025-05-29 10:10:35,492 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:10:35,496 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:10:35,496 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:10:37,382 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:10:37,390 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:10:37,390 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:10:37,390 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:10:37,390 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:10:37,390 - evaluator - INFO - Starting hop retrieval for query: 'Albania previous NDC initial NDC first NDC earlier...' (country: Albania)
+2025-05-29 10:10:37,399 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:10:37,467 - evaluator - INFO - Relationships for country 'Albania': 7450
+2025-05-29 10:10:37,470 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:10:37,471 - hop_rag - INFO - Original query: 'Albania previous NDC initial NDC first NDC earlier...'
+2025-05-29 10:10:37,471 - hop_rag - INFO - Using cleaned tsquery: 'Albania | previous | NDC | initial | NDC | first | NDC | earlier | submission | prior'
+2025-05-29 10:10:37,721 - hop_rag - INFO - Initial text match count for query: 426
+2025-05-29 10:10:37,732 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:10:37,738 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:10:38,724 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:10:38,825 - evaluator - INFO - Raw processor results: 27 total nodes found
+2025-05-29 10:10:38,825 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:10:38,840 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:10:38,840 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:10:39,671 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:10:39,671 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:10:39,671 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:10:43,043 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:10:43,043 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:10:43,043 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:10:43,061 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:10:43,061 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:10:43,187 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:10:43.187868', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:10:43,187 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:10:43,729 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:10:43,800 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:10:43,810 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:10:43,815 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:10:43,820 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:10:43,823 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:10:43,829 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:10:43,883 - database - INFO - Successfully connected to database
+2025-05-29 10:10:44,494 - database - INFO - Successfully connected to database
+2025-05-29 10:10:44,506 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:10:44,519 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:10:44,562 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:44,635 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:45,956 - database - INFO - Successfully connected to database
+2025-05-29 10:10:45,958 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:10:45,966 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:10:45,966 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:10:47,858 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:10:47,858 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:10:47,858 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:10:47,858 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:10:47,858 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:10:47,858 - evaluator - INFO - Starting hop retrieval for query: 'Albania implementation policy measures mitigation ...' (country: Albania)
+2025-05-29 10:10:47,867 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:10:47,925 - evaluator - INFO - Relationships for country 'Albania': 7450
+2025-05-29 10:10:47,925 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:10:47,925 - hop_rag - INFO - Original query: 'Albania implementation policy measures mitigation ...'
+2025-05-29 10:10:47,925 - hop_rag - INFO - Using cleaned tsquery: 'Albania | implementation | policy | measures | mitigation | actions | mitigation | measures | policy | instruments'
+2025-05-29 10:10:48,168 - hop_rag - INFO - Initial text match count for query: 603
+2025-05-29 10:10:48,181 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:10:48,181 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:10:49,336 - hop_rag - INFO - BFS query returned 49 results
+2025-05-29 10:10:49,352 - evaluator - INFO - Raw processor results: 5 total nodes found
+2025-05-29 10:10:49,352 - evaluator - INFO - Retrieved 5 chunks using hop reasoning
+2025-05-29 10:10:49,366 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:10:49,367 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:10:50,053 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:10:50,053 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:10:50,053 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:10:53,199 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:10:53,199 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:10:53,199 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:10:53,224 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:10:53,224 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:10:53,366 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:10:53.366447', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:10:53,366 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:10:53,910 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:10:54,334 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:10:54,408 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:10:54,412 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:10:54,416 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:10:54,416 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:10:54,426 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:10:54,489 - database - INFO - Successfully connected to database
+2025-05-29 10:10:54,990 - database - INFO - Successfully connected to database
+2025-05-29 10:10:55,001 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:10:55,015 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:10:55,057 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:55,129 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:10:56,343 - database - INFO - Successfully connected to database
+2025-05-29 10:10:56,349 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:10:56,350 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:10:56,350 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:10:58,002 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:10:58,002 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:10:58,002 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:10:58,002 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:10:58,011 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:10:58,012 - evaluator - INFO - Starting hop retrieval for query: 'Albania challenging sectors difficult sectors hard...' (country: Albania)
+2025-05-29 10:10:58,020 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:10:58,062 - evaluator - INFO - Relationships for country 'Albania': 7450
+2025-05-29 10:10:58,068 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:10:58,068 - hop_rag - INFO - Original query: 'Albania challenging sectors difficult sectors hard...'
+2025-05-29 10:10:58,068 - hop_rag - INFO - Using cleaned tsquery: 'Albania | challenging | sectors | difficult | sectors | hard | abate | hard | abate | limitations'
+2025-05-29 10:10:58,298 - hop_rag - INFO - Initial text match count for query: 578
+2025-05-29 10:10:58,314 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:10:58,316 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:10:59,482 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:10:59,586 - evaluator - INFO - Raw processor results: 31 total nodes found
+2025-05-29 10:10:59,586 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:10:59,598 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:10:59,598 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:11:00,245 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:11:00,245 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:11:00,248 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:11:03,636 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:11:03,636 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:11:03,636 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:11:03,652 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:11:03,652 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:11:03,814 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:11:03.814253', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:11:03,814 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:11:04,396 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:11:04,568 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:11:04,577 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:11:04,582 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:11:04,585 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:11:04,585 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:11:04,593 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:11:04,658 - database - INFO - Successfully connected to database
+2025-05-29 10:11:05,101 - database - INFO - Successfully connected to database
+2025-05-29 10:11:05,109 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:11:05,125 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:11:05,210 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:11:05,275 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:11:06,367 - database - INFO - Successfully connected to database
+2025-05-29 10:11:06,367 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:11:06,384 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:11:06,384 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:11:07,910 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:11:07,910 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:11:07,910 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:11:07,910 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:11:07,910 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:11:07,910 - evaluator - INFO - Starting hop retrieval for query: 'Albania adaptation adapt to climate resilience cli...' (country: Albania)
+2025-05-29 10:11:07,921 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:11:07,981 - evaluator - INFO - Relationships for country 'Albania': 7450
+2025-05-29 10:11:07,986 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:11:07,986 - hop_rag - INFO - Original query: 'Albania adaptation adapt to climate resilience cli...'
+2025-05-29 10:11:07,987 - hop_rag - INFO - Using cleaned tsquery: 'Albania | adaptation | adapt | climate | resilience | climate | resilient | resilient | development | vulnerability'
+2025-05-29 10:11:08,221 - hop_rag - INFO - Initial text match count for query: 708
+2025-05-29 10:11:08,237 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:11:08,240 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:11:09,243 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:11:09,306 - evaluator - INFO - Raw processor results: 6 total nodes found
+2025-05-29 10:11:09,306 - evaluator - INFO - Retrieved 6 chunks using hop reasoning
+2025-05-29 10:11:09,320 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:11:09,323 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:11:10,082 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:11:10,082 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:11:10,082 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:11:13,128 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:11:13,128 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:11:13,128 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:11:13,150 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:11:13,153 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:11:13,302 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:11:13.302608', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:11:13,302 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:11:13,858 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:11:13,932 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:11:13,942 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:11:13,949 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:11:13,956 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:11:13,960 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:11:13,966 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:11:14,022 - database - INFO - Successfully connected to database
+2025-05-29 10:11:14,573 - database - INFO - Successfully connected to database
+2025-05-29 10:11:14,586 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:11:14,599 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:11:14,641 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:11:14,712 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:11:15,893 - database - INFO - Successfully connected to database
+2025-05-29 10:11:15,893 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:11:15,903 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:11:15,903 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:11:18,103 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:11:18,103 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:11:18,106 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:11:18,106 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:11:18,106 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:11:18,106 - evaluator - INFO - Starting hop retrieval for query: 'Albania climate finance financial resources financ...' (country: Albania)
+2025-05-29 10:11:18,114 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:11:18,159 - evaluator - INFO - Relationships for country 'Albania': 7450
+2025-05-29 10:11:18,165 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:11:18,166 - hop_rag - INFO - Original query: 'Albania climate finance financial resources financ...'
+2025-05-29 10:11:18,166 - hop_rag - INFO - Using cleaned tsquery: 'Albania | climate | finance | financial | resources | financial | support | funding | investment | needs'
+2025-05-29 10:11:18,410 - hop_rag - INFO - Initial text match count for query: 668
+2025-05-29 10:11:18,418 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:11:18,424 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:11:19,433 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:11:19,533 - evaluator - INFO - Raw processor results: 40 total nodes found
+2025-05-29 10:11:19,533 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:11:19,544 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:11:19,546 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:11:20,262 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:11:20,262 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:11:20,269 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:11:23,129 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:11:23,132 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:11:23,132 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:11:23,148 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:11:23,148 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:11:23,260 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:11:23.260999', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:11:23,260 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:11:23,806 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:11:23,874 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:11:23,876 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:11:23,884 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:11:23,884 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:11:23,891 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:11:23,896 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:11:23,949 - database - INFO - Successfully connected to database
+2025-05-29 10:11:24,381 - database - INFO - Successfully connected to database
+2025-05-29 10:11:24,394 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:11:24,407 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:11:24,446 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:11:24,514 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 865/865 chunks
+2025-05-29 10:11:25,367 - database - INFO - Successfully connected to database
+2025-05-29 10:11:25,367 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:11:25,377 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:11:25,377 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:11:26,832 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:11:26,837 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:11:26,837 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:11:26,837 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:11:26,837 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:11:26,840 - evaluator - INFO - Starting hop retrieval for query: 'Albania equity equitable fair share climate justic...' (country: Albania)
+2025-05-29 10:11:26,850 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:11:26,938 - evaluator - INFO - Relationships for country 'Albania': 7450
+2025-05-29 10:11:26,940 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:11:26,940 - hop_rag - INFO - Original query: 'Albania equity equitable fair share climate justic...'
+2025-05-29 10:11:26,940 - hop_rag - INFO - Using cleaned tsquery: 'Albania | equity | equitable | fair | share | climate | justice | just | transition | social'
+2025-05-29 10:11:27,021 - hop_rag - INFO - Initial text match count for query: 610
+2025-05-29 10:11:27,034 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:11:27,037 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:11:27,935 - hop_rag - INFO - BFS query returned 80 results
+2025-05-29 10:11:27,959 - evaluator - INFO - Raw processor results: 13 total nodes found
+2025-05-29 10:11:27,961 - evaluator - INFO - Retrieved 13 chunks using hop reasoning
+2025-05-29 10:11:28,038 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:11:28,038 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:11:28,814 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:11:28,814 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:11:28,814 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:11:31,877 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:11:31,877 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:11:31,878 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:11:31,897 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:11:31,898 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:11:32,014 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:11:32.014058', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:11:32,017 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:11:32,512 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:11:32,583 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:11:32,591 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:11:32,592 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:11:32,592 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:11:32,600 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:11:32,608 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:11:32,675 - database - INFO - Successfully connected to database
+2025-05-29 10:11:33,105 - database - INFO - Successfully connected to database
+2025-05-29 10:11:33,114 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:11:33,127 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:11:33,146 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:11:33,156 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:11:33,279 - database - INFO - Successfully connected to database
+2025-05-29 10:11:33,281 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:11:33,287 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:11:33,287 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:11:34,714 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:11:34,716 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:11:34,716 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:11:34,718 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:11:34,719 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:11:34,719 - evaluator - INFO - Starting hop retrieval for query: 'Algeria reduction target emissions target reduce e...' (country: Algeria)
+2025-05-29 10:11:34,731 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:11:34,758 - evaluator - INFO - Relationships for country 'Algeria': 723
+2025-05-29 10:11:34,762 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:11:34,762 - hop_rag - INFO - Original query: 'Algeria reduction target emissions target reduce e...'
+2025-05-29 10:11:34,764 - hop_rag - INFO - Using cleaned tsquery: 'Algeria | reduction | target | emissions | target | reduce | emissions | GHG | emissions | carbon'
+2025-05-29 10:11:35,014 - hop_rag - INFO - Initial text match count for query: 364
+2025-05-29 10:11:35,026 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:11:35,028 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:11:36,241 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:11:36,352 - evaluator - INFO - Raw processor results: 39 total nodes found
+2025-05-29 10:11:36,352 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:11:36,370 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:11:36,370 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:11:37,004 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:11:37,005 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:11:37,005 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:11:39,530 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:11:39,530 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:11:39,530 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:11:39,554 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:11:39,554 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:11:39,678 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:11:39.678580', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:11:39,679 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:11:40,194 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:11:40,266 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:11:40,274 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:11:40,279 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:11:40,280 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:11:40,280 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:11:40,292 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:11:40,345 - database - INFO - Successfully connected to database
+2025-05-29 10:11:40,775 - database - INFO - Successfully connected to database
+2025-05-29 10:11:40,792 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:11:40,802 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:11:40,820 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:11:40,830 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:11:40,958 - database - INFO - Successfully connected to database
+2025-05-29 10:11:40,958 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:11:40,966 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:11:40,966 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:11:42,559 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:11:42,559 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:11:42,559 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:11:42,559 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:11:42,567 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:11:42,567 - evaluator - INFO - Starting hop retrieval for query: 'Algeria baseline year reference year base year com...' (country: Algeria)
+2025-05-29 10:11:42,572 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:11:42,594 - evaluator - INFO - Relationships for country 'Algeria': 723
+2025-05-29 10:11:42,596 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:11:42,596 - hop_rag - INFO - Original query: 'Algeria baseline year reference year base year com...'
+2025-05-29 10:11:42,596 - hop_rag - INFO - Using cleaned tsquery: 'Algeria | baseline | year | reference | year | base | year | compared | relative | with'
+2025-05-29 10:11:42,674 - hop_rag - INFO - Initial text match count for query: 443
+2025-05-29 10:11:42,687 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:11:42,690 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:11:43,658 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:11:43,746 - evaluator - INFO - Raw processor results: 20 total nodes found
+2025-05-29 10:11:43,746 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:11:43,758 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:11:43,758 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:11:44,432 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:11:44,432 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:11:44,432 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:11:47,276 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:11:47,277 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:11:47,278 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:11:47,300 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:11:47,300 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:11:47,421 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:11:47.421280', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:11:47,421 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:11:47,899 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:11:47,956 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:11:47,964 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:11:47,969 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:11:47,973 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:11:47,973 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:11:47,979 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:11:48,036 - database - INFO - Successfully connected to database
+2025-05-29 10:11:48,451 - database - INFO - Successfully connected to database
+2025-05-29 10:11:48,462 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:11:48,474 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:11:48,490 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:11:48,503 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:11:48,619 - database - INFO - Successfully connected to database
+2025-05-29 10:11:48,619 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:11:48,627 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:11:48,627 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:11:50,066 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:11:50,066 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:11:50,066 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:11:50,066 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:11:50,066 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:11:50,066 - evaluator - INFO - Starting hop retrieval for query: 'Algeria previous NDC initial NDC first NDC earlier...' (country: Algeria)
+2025-05-29 10:11:50,074 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:11:50,095 - evaluator - INFO - Relationships for country 'Algeria': 723
+2025-05-29 10:11:50,095 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:11:50,098 - hop_rag - INFO - Original query: 'Algeria previous NDC initial NDC first NDC earlier...'
+2025-05-29 10:11:50,098 - hop_rag - INFO - Using cleaned tsquery: 'Algeria | previous | NDC | initial | NDC | first | NDC | earlier | submission | prior'
+2025-05-29 10:11:50,171 - hop_rag - INFO - Initial text match count for query: 313
+2025-05-29 10:11:50,187 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:11:50,191 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:11:51,070 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:11:51,173 - evaluator - INFO - Raw processor results: 30 total nodes found
+2025-05-29 10:11:51,173 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:11:51,184 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:11:51,188 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:11:51,777 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:11:51,777 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:11:51,779 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:11:54,425 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:11:54,426 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:11:54,426 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:11:54,443 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:11:54,443 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:11:54,560 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:11:54.560271', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:11:54,566 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:11:55,062 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:11:55,135 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:11:55,139 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:11:55,143 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:11:55,147 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:11:55,150 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:11:55,155 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:11:55,212 - database - INFO - Successfully connected to database
+2025-05-29 10:11:55,630 - database - INFO - Successfully connected to database
+2025-05-29 10:11:55,643 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:11:55,656 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:11:55,672 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:11:55,678 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:11:55,793 - database - INFO - Successfully connected to database
+2025-05-29 10:11:55,793 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:11:55,801 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:11:55,801 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:11:57,241 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:11:57,242 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:11:57,243 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:11:57,243 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:11:57,244 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:11:57,244 - evaluator - INFO - Starting hop retrieval for query: 'Algeria implementation policy measures mitigation ...' (country: Algeria)
+2025-05-29 10:11:57,252 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:11:57,268 - evaluator - INFO - Relationships for country 'Algeria': 723
+2025-05-29 10:11:57,268 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:11:57,271 - hop_rag - INFO - Original query: 'Algeria implementation policy measures mitigation ...'
+2025-05-29 10:11:57,272 - hop_rag - INFO - Using cleaned tsquery: 'Algeria | implementation | policy | measures | mitigation | actions | mitigation | measures | policy | instruments'
+2025-05-29 10:11:57,512 - hop_rag - INFO - Initial text match count for query: 435
+2025-05-29 10:11:57,525 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:11:57,528 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:11:58,473 - hop_rag - INFO - BFS query returned 12 results
+2025-05-29 10:11:58,484 - evaluator - INFO - Raw processor results: 5 total nodes found
+2025-05-29 10:11:58,484 - evaluator - INFO - Retrieved 5 chunks using hop reasoning
+2025-05-29 10:11:58,498 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:11:58,499 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:11:59,131 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:11:59,131 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:11:59,131 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:12:01,908 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:12:01,908 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:12:01,911 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:12:01,927 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:12:01,927 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:12:02,042 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:12:02.042428', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:12:02,042 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:12:02,527 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:12:02,587 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:12:02,594 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:12:02,603 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:12:02,603 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:12:02,610 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:12:02,658 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:12:02,824 - database - INFO - Successfully connected to database
+2025-05-29 10:12:03,334 - database - INFO - Successfully connected to database
+2025-05-29 10:12:03,344 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:12:03,357 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:12:03,371 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:12:03,380 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:12:03,503 - database - INFO - Successfully connected to database
+2025-05-29 10:12:03,503 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:12:03,512 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:12:03,512 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:12:05,011 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:12:05,013 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:12:05,013 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:12:05,013 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:12:05,015 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:12:05,015 - evaluator - INFO - Starting hop retrieval for query: 'Algeria challenging sectors difficult sectors hard...' (country: Algeria)
+2025-05-29 10:12:05,024 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:12:05,042 - evaluator - INFO - Relationships for country 'Algeria': 723
+2025-05-29 10:12:05,043 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:12:05,046 - hop_rag - INFO - Original query: 'Algeria challenging sectors difficult sectors hard...'
+2025-05-29 10:12:05,046 - hop_rag - INFO - Using cleaned tsquery: 'Algeria | challenging | sectors | difficult | sectors | hard | abate | hard | abate | limitations'
+2025-05-29 10:12:05,276 - hop_rag - INFO - Initial text match count for query: 453
+2025-05-29 10:12:05,288 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:12:05,292 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:12:06,381 - hop_rag - INFO - BFS query returned 96 results
+2025-05-29 10:12:06,518 - evaluator - INFO - Raw processor results: 49 total nodes found
+2025-05-29 10:12:06,519 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:12:06,527 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:12:06,532 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:12:07,140 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:12:07,140 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:12:07,140 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:12:10,040 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:12:10,042 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:12:10,042 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:12:10,054 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:12:10,054 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:12:10,161 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:12:10.161291', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:12:10,161 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:12:10,633 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:12:10,700 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:12:10,707 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:12:10,713 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:12:10,715 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:12:10,718 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:12:10,724 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:12:10,782 - database - INFO - Successfully connected to database
+2025-05-29 10:12:11,210 - database - INFO - Successfully connected to database
+2025-05-29 10:12:11,225 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:12:11,237 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:12:11,251 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:12:11,265 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:12:11,375 - database - INFO - Successfully connected to database
+2025-05-29 10:12:11,375 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:12:11,381 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:12:11,381 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:12:12,982 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:12:12,982 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:12:12,982 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:12:12,982 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:12:12,982 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:12:12,982 - evaluator - INFO - Starting hop retrieval for query: 'Algeria adaptation adapt to climate resilience cli...' (country: Algeria)
+2025-05-29 10:12:12,995 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:12:13,009 - evaluator - INFO - Relationships for country 'Algeria': 723
+2025-05-29 10:12:13,013 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:12:13,015 - hop_rag - INFO - Original query: 'Algeria adaptation adapt to climate resilience cli...'
+2025-05-29 10:12:13,016 - hop_rag - INFO - Using cleaned tsquery: 'Algeria | adaptation | adapt | climate | resilience | climate | resilient | resilient | development | vulnerability'
+2025-05-29 10:12:13,244 - hop_rag - INFO - Initial text match count for query: 594
+2025-05-29 10:12:13,254 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:12:13,260 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:12:14,018 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:12:14,083 - evaluator - INFO - Raw processor results: 8 total nodes found
+2025-05-29 10:12:14,083 - evaluator - INFO - Retrieved 8 chunks using hop reasoning
+2025-05-29 10:12:14,097 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:12:14,097 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:12:14,764 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:12:14,764 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:12:14,764 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:12:17,571 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:12:17,572 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:12:17,573 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:12:17,592 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:12:17,594 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:12:17,716 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:12:17.716870', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:12:17,716 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:12:18,189 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:12:18,255 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:12:18,263 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:12:18,267 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:12:18,270 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:12:18,273 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:12:18,279 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:12:18,336 - database - INFO - Successfully connected to database
+2025-05-29 10:12:18,754 - database - INFO - Successfully connected to database
+2025-05-29 10:12:18,764 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:12:18,776 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:12:18,792 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:12:18,805 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:12:18,915 - database - INFO - Successfully connected to database
+2025-05-29 10:12:18,915 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:12:18,923 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:12:18,923 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:12:20,355 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:12:20,355 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:12:20,355 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:12:20,355 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:12:20,359 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:12:20,359 - evaluator - INFO - Starting hop retrieval for query: 'Algeria climate finance financial resources financ...' (country: Algeria)
+2025-05-29 10:12:20,368 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:12:20,385 - evaluator - INFO - Relationships for country 'Algeria': 723
+2025-05-29 10:12:20,385 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:12:20,385 - hop_rag - INFO - Original query: 'Algeria climate finance financial resources financ...'
+2025-05-29 10:12:20,385 - hop_rag - INFO - Using cleaned tsquery: 'Algeria | climate | finance | financial | resources | financial | support | funding | investment | needs'
+2025-05-29 10:12:20,673 - hop_rag - INFO - Initial text match count for query: 527
+2025-05-29 10:12:20,687 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:12:20,689 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:12:21,381 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:12:21,485 - evaluator - INFO - Raw processor results: 40 total nodes found
+2025-05-29 10:12:21,485 - evaluator - INFO - Retrieved 20 chunks using hop reasoning
+2025-05-29 10:12:21,504 - embed.transformer - INFO - Loading English transformer model...
+2025-05-29 10:12:21,504 - embed.transformer - INFO - Downloading English model from Hugging Face
+2025-05-29 10:12:22,118 - embed.transformer - INFO - Successfully loaded English model from Hugging Face
+2025-05-29 10:12:22,118 - embed.transformer - INFO - Loading multilingual transformer model...
+2025-05-29 10:12:22,118 - embed.transformer - INFO - Downloading multilingual model from Hugging Face
+2025-05-29 10:12:24,718 - embed.transformer - INFO - Successfully loaded multilingual model from Hugging Face
+2025-05-29 10:12:24,718 - embed.transformer - INFO - Successfully loaded transformer embedding models
+2025-05-29 10:12:24,718 - gensim.utils - INFO - loading Word2Vec object from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec
+2025-05-29 10:12:24,740 - gensim.utils - INFO - loading wv recursively from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec.wv.* with mmap=None
+2025-05-29 10:12:24,740 - gensim.utils - INFO - setting ignored attribute cum_table to None
+2025-05-29 10:12:24,850 - gensim.utils - INFO - Word2Vec lifecycle event {'fname': 'C:\\Users\\nayrb\\Documents\\rag-fact-sheets-4\\local_models\\word2vec', 'datetime': '2025-05-29T10:12:24.850231', 'gensim': '4.3.3', 'python': '3.10.11 (tags/v3.10.11:7d4cc5a, Apr  5 2023, 00:38:17) [MSC v.1929 64 bit (AMD64)]', 'platform': 'Windows-10-10.0.26100-SP0', 'event': 'loaded'}
+2025-05-29 10:12:24,850 - embed.word2vec - INFO - Loaded Word2Vec model from C:\Users\nayrb\Documents\rag-fact-sheets-4\local_models\word2vec. Vocabulary size: 7905
+2025-05-29 10:12:25,384 - evaluator - INFO - Creating pgvector indices for embeddings...
+2025-05-29 10:12:25,454 - evaluator - INFO - Ensured pgvector extension exists
+2025-05-29 10:12:25,462 - evaluator - INFO - Converted transformer_embedding column to vector(768) type
+2025-05-29 10:12:25,467 - evaluator - INFO - Converted word2vec_embedding column to vector(300) type
+2025-05-29 10:12:25,470 - evaluator - INFO - Created transformer_embedding index
+2025-05-29 10:12:25,474 - evaluator - INFO - Created word2vec_embedding index
+2025-05-29 10:12:25,475 - evaluator - INFO - Successfully created all pgvector indices
+2025-05-29 10:12:25,544 - database - INFO - Successfully connected to database
+2025-05-29 10:12:25,982 - database - INFO - Successfully connected to database
+2025-05-29 10:12:25,992 - evaluator - INFO - pgvector test result: similarity = 0.9914601339836673
+2025-05-29 10:12:26,003 - evaluator - INFO - Vector dimensions from schema: {'hoprag_embedding': 384, 'transformer_embedding': 768, 'word2vec_embedding': 300}
+2025-05-29 10:12:26,019 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:12:26,032 - evaluator - INFO - [BATCH_SIMILARITY] Calculated similarity for 55/55 chunks
+2025-05-29 10:12:26,154 - database - INFO - Successfully connected to database
+2025-05-29 10:12:26,154 - databases.auth - INFO - Initializing PostgresConnection...
+2025-05-29 10:12:26,162 - sentence_transformers.SentenceTransformer - INFO - Use pytorch device_name: cpu
+2025-05-29 10:12:26,162 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: all-MiniLM-L6-v2
+2025-05-29 10:12:27,728 - hop_rag - INFO - Loaded sentence transformer model: all-MiniLM-L6-v2
+2025-05-29 10:12:27,728 - hop_rag - INFO - Embedding dimension: 384
+2025-05-29 10:12:27,728 - hop_rag - INFO - Optimized HopRAG processor initialized with model: all-MiniLM-L6-v2
+2025-05-29 10:12:27,728 - hop_rag - INFO - Optimized graph processor initialized
+2025-05-29 10:12:27,728 - evaluator - INFO - Initialized GraphHopRetriever using HopRAGGraphProcessor
+2025-05-29 10:12:27,736 - evaluator - INFO - Starting hop retrieval for query: 'Algeria equity equitable fair share climate justic...' (country: Algeria)
+2025-05-29 10:12:27,736 - evaluator - INFO - Total relationships in database: 9343
+2025-05-29 10:12:27,755 - evaluator - INFO - Relationships for country 'Algeria': 723
+2025-05-29 10:12:27,761 - evaluator - INFO - Executing processor.get_top_ranked_nodes with max_hops=2
+2025-05-29 10:12:27,764 - hop_rag - INFO - Original query: 'Algeria equity equitable fair share climate justic...'
+2025-05-29 10:12:27,764 - hop_rag - INFO - Using cleaned tsquery: 'Algeria | equity | equitable | fair | share | climate | justice | just | transition | social'
+2025-05-29 10:12:27,828 - hop_rag - INFO - Initial text match count for query: 473
+2025-05-29 10:12:27,845 - hop_rag - INFO - High-confidence relationships available for traversal: 5518
+2025-05-29 10:12:27,848 - hop_rag - INFO - Executing BFS query with max_hops=2, top_k=50
+2025-05-29 10:12:28,455 - hop_rag - INFO - BFS query returned 100 results
+2025-05-29 10:12:28,520 - evaluator - INFO - Raw processor results: 15 total nodes found
+2025-05-29 10:12:28,528 - evaluator - INFO - Retrieved 15 chunks using hop reasoning

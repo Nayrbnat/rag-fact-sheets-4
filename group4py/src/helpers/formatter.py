@@ -10,7 +10,7 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 import group4py
 from constants.styles import EMAIL_CSS_STYLE
-from constants.questions import DEFAULT_QUESTIONS
+from constants.prompts import DEFAULT_QUESTIONS
 
 logger = logging.getLogger(__name__)
 

@@ -263,5 +263,25 @@ HOP_KEYWORDS = {
 GENERAL_NDC_KEYWORDS = [
     "nationally determined contribution", "NDC", "Paris Agreement", "climate change", 
     "mitigation", "adaptation", "greenhouse gas", "GHG", "emissions", 
-    "climate policy", "climate action", "UNFCCC", "carbon", "climate goals"
+    "climate policy", "climate action"
+    , "UNFCCC", "carbon", "climate goals"
 ]
+
+# For HTML and Emails
+DEFAULT_QUESTIONS = {
+    "QUESTION_1": "What does the country promise as their emissions reduction target?",
+    
+    "QUESTION_2": "What year is the country using as baseline for their emissions reduction target?",
+    
+    "QUESTION_3": "What promises or commitments in this version of the NDC are different from the previous version?",
+    
+    "QUESTION_4": "What specific policies or strategies does the country propose to meet its climate targets?",
+    
+    "QUESTION_5": "Do they specify which sectors of their economy will be the hardest to reduce emissions in?",
+    
+    "QUESTION_6": "What adaptation measures does the country propose to implement?",
+    
+    "QUESTION_7": "What climate finance needs does the country identify in its NDC?",
+    
+    "QUESTION_8": "How does the country address climate justice, equity, or fair share considerations in its NDC?"
+}
